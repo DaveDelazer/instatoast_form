@@ -1,0 +1,13 @@
+{
+  "name": "instatoast-signed-url",
+  "version": "1.0.0",
+  "description": "Cloud Function: generates signed GCS upload URLs for the Instatoast order form",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.14.0",
+    "stripe": "^17.0.0"
+  }
+}

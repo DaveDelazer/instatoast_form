@@ -116,3 +116,28 @@ All changes in `index.html`, pushed to `main` on GitHub. GitHub Pages auto-deplo
 - [ ] Tighten GCS CORS `origin` from `*` to actual form URL once DNS is live
 - [ ] Remove `allUsers` objectCreator from `instatoast-videos` once signed URLs confirmed working
 - [ ] Upload Country and Pop Punk audio preview files to GCS if not already done (`hb_country.mp3`, `hb_pop_punk.mp3`)
+
+---
+
+## Session 3 — 2026-03-21
+
+### What changed
+
+No code changes this session.
+
+Confirmed that the payload already includes everything requested:
+- `shoutout_action`, `shoutout_when`, `shoutout_result`, and `shoutout_full` are all sent in the webhook payload
+- `occasion` is already in the payload, hardcoded to `'birthday'` via `CONFIG.occasion`, hidden from the UI — ready to be wired to a selector in a future session when more occasions are added
+
+### Current state
+
+Same as Session 2 — no changes deployed.
+
+### Pending before go-live
+
+- [ ] End-to-end test: upload → webhook → Stripe redirect
+- [ ] Mobile testing
+- [ ] Set up `order.instatoast.com` CNAME in Porkbun → GitHub Pages (Dave to do)
+- [ ] Tighten GCS CORS `origin` from `*` to actual form URL once DNS is live
+- [ ] Remove `allUsers` objectCreator from `instatoast-videos` once signed URLs confirmed working
+- [ ] Upload Country and Pop Punk audio preview files to GCS if not already done (`hb_country.mp3`, `hb_pop_punk.mp3`)

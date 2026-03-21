@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Order — Instatoast</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+  <script src="https://js.stripe.com/v3/"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -518,9 +519,96 @@
     .progress-status { font-size: 14px; color: var(--muted); margin-bottom: 18px; min-height: 20px; }
     .progress-bar-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
     .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s ease; width: 0%; }
+
+    /* ── Payment modal ───────────────────────────────────────────────────── */
+    .payment-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      z-index: 300;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .payment-modal.hidden { display: none; }
+
+    @media (min-width: 600px) { .payment-modal { align-items: center; padding: 24px; } }
+
+    .payment-modal__card {
+      background: var(--surface);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 500px;
+      max-height: 92vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      /* swap the keyframes in @keyframes payment-modal-in to add a custom entry animation */
+      animation: payment-modal-in 0.35s ease;
+    }
+    @media (min-width: 600px) { .payment-modal__card { border-radius: 20px; } }
+
+    @keyframes payment-modal-in {
+      from { opacity: 0; transform: translateY(32px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .payment-modal__header {
+      padding: 20px 20px 0;
+      flex-shrink: 0;
+    }
+    .payment-modal__title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .payment-modal__body { padding: 20px; flex: 1; }
+
+    /* ── Order complete ──────────────────────────────────────────────────── */
+    .order-complete {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+    .order-complete.hidden { display: none; }
+
+    .order-complete__card {
+      background: var(--surface);
+      border: 2px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 48px 32px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .order-complete__icon { font-size: 52px; margin-bottom: 16px; }
+    .order-complete__title { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+    .order-complete__msg { font-size: 15px; color: var(--muted); line-height: 1.6; }
   </style>
 </head>
 <body>
+
+<!-- ─── Payment modal ────────────────────────────────────────────────────── -->
+<div id="payment-modal" class="payment-modal hidden" role="dialog" aria-modal="true" aria-label="Complete your order">
+  <div class="payment-modal__card">
+    <div class="payment-modal__header">
+      <span class="payment-modal__title">Complete your order</span>
+    </div>
+    <div id="payment-element" class="payment-modal__body"></div>
+  </div>
+</div>
+
+<!-- ─── Order complete ────────────────────────────────────────────────────── -->
+<div id="order-complete" class="order-complete hidden">
+  <div class="order-complete__card">
+    <div class="order-complete__icon">🎉</div>
+    <h2 class="order-complete__title">You're all set!</h2>
+    <p class="order-complete__msg">Your order is confirmed. We'll send the finished video to you as soon as it's ready.</p>
+  </div>
+</div>
 
 <!-- ─── Progress overlay ──────────────────────────────────────────────────── -->
 <div id="progress-overlay" class="progress-overlay hidden" aria-live="polite">
@@ -685,12 +773,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 const CONFIG = {
   // Pipeline
-  webhookUrl:         'https://hook.us1.make.com/pfwk6vqgu1yljn9s6573u3qukqxjcu0j',
-  stripeUrl:          'https://buy.stripe.com/dRmaEQ7Hk95B7DEgsCeIw01',
-  gcpBucket:          'instatoast-videos',
-  gcpFolder:          'instatoast/orders',
-  signedUrlEndpoint:  'https://us-central1-nca-toolkit-api-452723.cloudfunctions.net/getSignedUploadUrl',
-  useSignedUrls:      true,
+  webhookUrl:            'https://hook.us1.make.com/pfwk6vqgu1yljn9s6573u3qukqxjcu0j',
+  gcpBucket:             'instatoast-videos',
+  gcpFolder:             'instatoast/orders',
+  signedUrlEndpoint:     'https://us-central1-nca-toolkit-api-452723.cloudfunctions.net/getSignedUploadUrl',
+  useSignedUrls:         true,
+
+  // Stripe embedded checkout
+  stripePublishableKey:  'pk_live_51Sek6v34CKOoUJtzxFbCwBoMoGWztjaWvlr4uKMszM2wMPflTdpVXPMiooKwf2Sk26EiNEL64l3L1XGXqDWWcGFC00qlHJgdCu',
+  checkoutSessionUrl:    'https://us-central1-nca-toolkit-api-452723.cloudfunctions.net/createCheckoutSession',
 
   // Limits
   minPhotos:          10,
@@ -1297,6 +1388,36 @@ async function uploadAllPhotos(orderId) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Payment modal
+// ─────────────────────────────────────────────────────────────────────────────
+async function openPaymentModal(orderId) {
+  setProgress(10, 10, 'Opening payment…');
+
+  const res = await fetch(CONFIG.checkoutSessionUrl, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ orderId }),
+  });
+  if (!res.ok) throw new Error(`Payment session failed (${res.status})`);
+  const { clientSecret } = await res.json();
+
+  document.getElementById('progress-overlay').classList.add('hidden');
+  document.getElementById('payment-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  const stripe   = Stripe(CONFIG.stripePublishableKey);
+  const checkout = await stripe.initEmbeddedCheckout({
+    fetchClientSecret: () => Promise.resolve(clientSecret),
+  });
+  checkout.mount('#payment-element');
+}
+
+function showOrderComplete() {
+  document.querySelector('.form-wrapper').style.display = 'none';
+  document.getElementById('order-complete').classList.remove('hidden');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Submit
 // ─────────────────────────────────────────────────────────────────────────────
 async function handleSubmit(e) {
@@ -1346,13 +1467,14 @@ async function handleSubmit(e) {
     if (!webhookRes.ok) throw new Error(`Webhook failed (${webhookRes.status})`);
 
     try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
-    window.location.href = `${CONFIG.stripeUrl}?client_reference_id=${orderId}`;
+    await openPaymentModal(orderId);
 
   } catch (err) {
     document.getElementById('progress-overlay').classList.add('hidden');
+    document.getElementById('payment-modal').classList.add('hidden');
     document.body.style.overflow = '';
     submitBtn.disabled = false;
-    submitError.textContent = `Something went wrong: ${err.message}. Your photos are still queued — try submitting again.`;
+    submitError.textContent = `Something went wrong: ${err.message}. Please try again.`;
     submitError.classList.add('visible');
     submitError.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -1362,6 +1484,12 @@ async function handleSubmit(e) {
 // Init
 // ─────────────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // If returning from Stripe payment completion, show confirmation and skip form init
+  if (new URLSearchParams(window.location.search).get('order_complete') === 'true') {
+    showOrderComplete();
+    return;
+  }
+
   renderGenres();
   initToneButtons();
   MediaSlot.init();
