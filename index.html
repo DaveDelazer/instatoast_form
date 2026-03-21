@@ -35,7 +35,7 @@
     .form-wrapper {
       max-width: 680px;
       margin: 0 auto;
-      padding: 32px 16px 72px;
+      padding: 16px 16px 72px;
     }
 
     .form-header {
@@ -535,11 +535,6 @@
 
 <!-- ─── Form ──────────────────────────────────────────────────────────────── -->
 <div class="form-wrapper">
-  <header class="form-header">
-    <h1>Order your Instatoast</h1>
-    <p>A personalised birthday song video, delivered to your inbox.</p>
-  </header>
-
   <form id="order-form" novalidate>
 
     <!-- 1. About them -->
@@ -673,8 +668,8 @@ const CONFIG = {
   stripeUrl:          'https://buy.stripe.com/dRmaEQ7Hk95B7DEgsCeIw01',
   gcpBucket:          'instatoast-videos',
   gcpFolder:          'instatoast/orders',
-  signedUrlEndpoint:  'YOUR_CLOUD_FUNCTION_URL', // deployed Cloud Function HTTPS trigger (used when useSignedUrls: true)
-  useSignedUrls:      false, // set to true once Cloud Function is deployed; false = direct public PUT (testing only)
+  signedUrlEndpoint:  'https://us-central1-nca-toolkit-api-452723.cloudfunctions.net/getSignedUploadUrl',
+  useSignedUrls:      true,
 
   // Limits
   minPhotos:          10,
@@ -918,7 +913,7 @@ const MediaSlot = {
       const thumbUrl = canvas.toDataURL('image/jpeg', 0.8);
       state.photos.push({ blob, thumbUrl });
       this.closeCropModal();
-      this.renderThumbnails();
+      this.appendThumbnail(state.photos.length - 1);
       updateAddPhotoBtn();
       clearError('photos-error');
       updateSummary();
@@ -941,6 +936,19 @@ const MediaSlot = {
       this.cropQueue = [];
       this.queueTotal = 0;
     }
+  },
+
+  appendThumbnail(i) {
+    const strip = document.getElementById('thumbnail-strip');
+    const photo = state.photos[i];
+    const div = document.createElement('div');
+    div.className = 'thumbnail';
+    div.innerHTML = `
+      <img src="${photo.thumbUrl}" alt="Photo ${i + 1}">
+      <button type="button" class="thumbnail-remove" aria-label="Remove photo ${i + 1}">✕</button>
+    `;
+    div.querySelector('.thumbnail-remove').addEventListener('click', () => this.removePhoto(i));
+    strip.appendChild(div);
   },
 
   renderThumbnails() {
@@ -1102,10 +1110,11 @@ function toggleAudioPreview(btn, audioUrl) {
 // Summary
 // ─────────────────────────────────────────────────────────────────────────────
 function buildShoutout() {
-  const what   = document.getElementById('shoutout-what').value.trim()   || '…';
-  const when   = document.getElementById('shoutout-when').value.trim()   || '…';
-  const result = document.getElementById('shoutout-result').value.trim() || '…';
-  return `${what}, ${when}, and ${result}`;
+  const name   = document.getElementById('recipient-name').value.trim() || '…';
+  const what   = document.getElementById('shoutout-what').value.trim()  || '…';
+  const when   = document.getElementById('shoutout-when').value.trim()  || '…';
+  const result = document.getElementById('shoutout-result').value.trim()|| '…';
+  return `${name} always ${what} ${when}, and ${result}`;
 }
 
 function updateShoutoutPreview() {
@@ -1314,7 +1323,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Text input listeners
   ['sender-name', 'sender-email', 'recipient-name'].forEach(id => {
     const el = document.getElementById(id);
-    el.addEventListener('input',  () => { saveToStorage(); updateSummary(); });
+    el.addEventListener('input',  () => { if (id === 'recipient-name') updateShoutoutPreview(); saveToStorage(); updateSummary(); });
     el.addEventListener('blur',   () => validateField(id));
   });
 
