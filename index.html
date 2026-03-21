@@ -304,6 +304,22 @@
     .genre-preview-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
     .genre-preview-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
 
+    .genre-suggest-wrap { margin-top: 12px; }
+    .genre-suggest-trigger {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      text-decoration-style: dashed;
+    }
+    .genre-suggest-trigger:hover { color: var(--accent); }
+    .genre-suggest-input { margin-top: 8px; font-size: 14px; }
+
     /* ── Summary ─────────────────────────────────────────────────────────── */
     .summary {
       background: #f7f7f8;
@@ -379,6 +395,7 @@
 
     /* ── Shoutout preview ────────────────────────────────────────────────── */
     .shoutout-preview {
+      display: none;
       margin-top: 14px;
       padding: 12px 14px;
       background: #f5f0fc;
@@ -566,6 +583,10 @@
         <label>Song style</label>
         <div class="error-msg" id="genre-error"></div>
         <div id="genre-list" class="genre-list" role="radiogroup" aria-label="Song style"></div>
+        <div class="genre-suggest-wrap">
+          <button type="button" class="genre-suggest-trigger" id="genre-suggest-trigger">Don't see your vibe? Suggest one</button>
+          <input type="text" id="genre-suggestion" class="genre-suggest-input" placeholder="e.g. Jazz, Metal, K-Pop…" autocomplete="off" style="display:none">
+        </div>
       </div>
     </div>
 
@@ -575,7 +596,7 @@
       <div class="hint" style="margin-bottom:14px;">Pick one quirky habit or funny thing they always do. The weirder and more specific, the better the song!</div>
 
       <div class="field">
-        <label for="shoutout-what">What do they do?</label>
+        <label for="shoutout-what">What do they always do?</label>
         <input type="text" id="shoutout-what" autocomplete="off" placeholder="Takes off her jeans">
         <div class="error-msg" id="shoutout-what-error"></div>
       </div>
@@ -587,7 +608,7 @@
       </div>
 
       <div class="field" style="margin-bottom:0;">
-        <label for="shoutout-result">What happens?</label>
+        <label for="shoutout-result">And then what happens?</label>
         <input type="text" id="shoutout-result" autocomplete="off" placeholder="Lives in sweats 24/7">
         <div class="error-msg" id="shoutout-result-error"></div>
       </div>
@@ -697,16 +718,16 @@ const CONFIG = {
       audioUrl:    'https://storage.googleapis.com/instatoast-videos/instatoast/assets/hb_reggae.mp3',
     },
     {
-      key:         'genre_2',
-      name:        'PLACEHOLDER',
-      description: 'PLACEHOLDER',
-      audioUrl:    'PLACEHOLDER',
+      key:         'country',
+      name:        'Country',
+      description: 'Storytelling twang with a big warm chorus',
+      audioUrl:    'https://storage.googleapis.com/instatoast-videos/instatoast/assets/hb_country.mp3',
     },
     {
-      key:         'genre_3',
-      name:        'PLACEHOLDER',
-      description: 'PLACEHOLDER',
-      audioUrl:    'PLACEHOLDER',
+      key:         'pop_punk',
+      name:        'Pop Punk',
+      description: 'High energy, anthemic, and a little chaotic',
+      audioUrl:    'https://storage.googleapis.com/instatoast-videos/instatoast/assets/hb_pop_punk.mp3',
     },
   ],
 };
@@ -764,6 +785,7 @@ function saveToStorage() {
     shoutoutResult:document.getElementById('shoutout-result').value,
     tone:          state.tone,
     genre:         state.selectedGenre,
+    genreSuggestion: document.getElementById('genre-suggestion').value,
   };
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
 }
@@ -788,6 +810,11 @@ function restoreFromStorage() {
       el.classList.toggle('selected', el.dataset.key === data.genre);
       el.setAttribute('aria-checked', String(el.dataset.key === data.genre));
     });
+  }
+  if (data.genreSuggestion) {
+    document.getElementById('genre-suggestion').value = data.genreSuggestion;
+    document.getElementById('genre-suggestion').style.display = 'block';
+    document.getElementById('genre-suggest-trigger').style.display = 'none';
   }
   updateSummary();
 }
@@ -1110,15 +1137,35 @@ function toggleAudioPreview(btn, audioUrl) {
 // Summary
 // ─────────────────────────────────────────────────────────────────────────────
 function buildShoutout() {
-  const name   = document.getElementById('recipient-name').value.trim() || '…';
-  const what   = document.getElementById('shoutout-what').value.trim()  || '…';
-  const when   = document.getElementById('shoutout-when').value.trim()  || '…';
-  const result = document.getElementById('shoutout-result').value.trim()|| '…';
-  return `${name} always ${what} ${when}, and ${result}`;
+  const name   = document.getElementById('recipient-name').value.trim();
+  const what   = document.getElementById('shoutout-what').value.trim();
+  const when   = document.getElementById('shoutout-when').value.trim();
+  const result = document.getElementById('shoutout-result').value.trim();
+  const parts = [];
+  if (name || what) {
+    let opening = '';
+    if (name && what) opening = `${name} always ${what}`;
+    else if (name)    opening = `${name} always`;
+    else              opening = `Always ${what}`;
+    parts.push(opening);
+  }
+  if (when)   parts.push(when);
+  if (result) parts.push(`and ${result}`);
+  return parts.join(', ');
 }
 
 function updateShoutoutPreview() {
-  document.getElementById('shoutout-preview-text').textContent = buildShoutout();
+  const what   = document.getElementById('shoutout-what').value.trim();
+  const when   = document.getElementById('shoutout-when').value.trim();
+  const result = document.getElementById('shoutout-result').value.trim();
+  const preview = document.querySelector('.shoutout-preview');
+  const text    = buildShoutout();
+  if (what || when || result) {
+    preview.style.display = '';
+    document.getElementById('shoutout-preview-text').textContent = text;
+  } else {
+    preview.style.display = 'none';
+  }
 }
 
 function summaryRow(label, value, filled) {
@@ -1284,6 +1331,7 @@ async function handleSubmit(e) {
       shoutout_full:   buildShoutout(),
       tone:            state.tone,
       genre:          state.selectedGenre,
+      genre_suggestion: document.getElementById('genre-suggestion').value.trim() || null,
       photo_urls:     photoUrls,
       photo_count:    photoUrls.length,
       consent:        document.getElementById('consent').checked,
@@ -1337,6 +1385,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('consent').addEventListener('change', () => {
     if (document.getElementById('consent').checked) clearError('consent-error');
   });
+
+  document.getElementById('genre-suggest-trigger').addEventListener('click', () => {
+    const input = document.getElementById('genre-suggestion');
+    const trigger = document.getElementById('genre-suggest-trigger');
+    input.style.display = 'block';
+    trigger.style.display = 'none';
+    input.focus();
+  });
+  document.getElementById('genre-suggestion').addEventListener('input', () => saveToStorage());
 
   document.getElementById('order-form').addEventListener('submit', handleSubmit);
 });
