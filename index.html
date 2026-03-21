@@ -9,21 +9,22 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --accent:      #e040a0;
-      --accent-dark: #c0318a;
-      --bg:          transparent;
+      --accent:      #e8197d;
+      --accent-dark: #c4146a;
+      --bg:          #9171d8;
       --surface:     #ffffff;
       --text:        #3b2270;
       --muted:       #7c6a9e;
       --border:      #e5d8f5;
+      --card-border: #3d2963;
       --error:       #dc2626;
-      --radius:      12px;
-      --shadow:      0 2px 8px rgba(60,30,120,0.10);
+      --radius:      20px;
+      --shadow:      0 4px 16px rgba(40,20,90,0.18);
     }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: transparent;
+      background: var(--bg);
       color: var(--text);
       font-size: 16px;
       line-height: 1.5;
@@ -32,38 +33,39 @@
 
     /* ── Layout ──────────────────────────────────────────────────────────── */
     .form-wrapper {
-      max-width: 560px;
+      max-width: 680px;
       margin: 0 auto;
-      padding: 28px 16px 72px;
+      padding: 32px 16px 72px;
     }
 
     .form-header {
       text-align: center;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
     .form-header h1 {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 700;
       margin-bottom: 6px;
+      color: #ffffff;
     }
     .form-header p {
       font-size: 15px;
-      color: var(--muted);
+      color: rgba(255,255,255,0.75);
     }
 
     .form-section {
       background: var(--surface);
-      border: 1px solid var(--border);
+      border: 2px solid var(--card-border);
       border-radius: var(--radius);
-      padding: 22px 20px;
-      margin-bottom: 14px;
+      padding: 26px 24px;
+      margin-bottom: 16px;
       box-shadow: var(--shadow);
     }
     .form-section h2 {
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       color: var(--muted);
       margin-bottom: 18px;
     }
@@ -157,7 +159,7 @@
       border-radius: 6px;
       overflow: hidden;
       border: 1.5px solid var(--border);
-      background: var(--bg);
+      background: var(--surface);
     }
     .thumbnail img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .thumbnail-remove {
@@ -364,6 +366,14 @@
       display: none;
     }
     .submit-error.visible { display: block; }
+
+    /* ── Responsive ─────────────────────────────────────────────────────── */
+    @media (max-width: 480px) {
+      .form-wrapper { padding: 20px 16px 60px; }
+      .form-section { padding: 20px 16px; }
+      .tone-options { grid-template-columns: 1fr; }
+      .form-header h1 { font-size: 22px; }
+    }
 
     /* ── Crop modal ──────────────────────────────────────────────────────── */
     .modal-backdrop {
