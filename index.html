@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Order — Instatoast</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:      #e040a0;
+      --accent-dark: #c0318a;
+      --bg:          transparent;
+      --surface:     #ffffff;
+      --text:        #3b2270;
+      --muted:       #7c6a9e;
+      --border:      #e5d8f5;
+      --error:       #dc2626;
+      --radius:      12px;
+      --shadow:      0 2px 8px rgba(60,30,120,0.10);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: transparent;
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────────────────── */
+    .form-wrapper {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 28px 16px 72px;
+    }
+
+    .form-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .form-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .form-header p {
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .form-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .form-section h2 {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    /* ── Fields ──────────────────────────────────────────────────────────── */
+    .field { margin-bottom: 18px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+    .optional { font-weight: 400; color: var(--muted); font-size: 13px; }
+
+    .hint {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 16px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--surface);
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    input.invalid, textarea.invalid { border-color: var(--error); }
+    textarea { resize: vertical; min-height: 92px; }
+
+    .char-count { font-size: 12px; color: var(--muted); text-align: right; margin-top: 4px; }
+    .char-count.near-limit { color: var(--accent); }
+    .char-count.at-limit { color: var(--error); }
+
+    .error-msg { font-size: 13px; color: var(--error); margin-top: 5px; display: none; }
+    .error-msg.visible { display: block; }
+
+    /* ── Tone buttons ────────────────────────────────────────────────────── */
+    .tone-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .tone-btn {
+      padding: 12px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      text-align: center;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .tone-btn:hover { border-color: var(--accent); }
+    .tone-btn.selected {
+      border-color: var(--accent);
+      background: #fdf0f8;
+      color: var(--accent);
+    }
+    .tone-btn-hint {
+      display: none;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+    .tone-btn.selected .tone-btn-hint { display: block; color: var(--accent); }
+
+    /* ── Photos ──────────────────────────────────────────────────────────── */
+    .thumbnail-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+
+    .thumbnail {
+      position: relative;
+      width: 68px;
+      height: 88px; /* ~864:1115 */
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+    }
+    .thumbnail img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .thumbnail-remove {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      border: none;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 9px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .storage-notice {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .drop-zone {
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 32px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: #fdf0f8;
+    }
+    .drop-zone-inner { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+    .drop-zone-label { font-size: 14px; color: var(--text); }
+    .drop-zone-link {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: inherit;
+      font-family: inherit;
+      color: var(--accent);
+      cursor: pointer;
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .drop-zone-sub { font-size: 13px; color: var(--muted); }
+
+    /* ── Genre list — compact radio style ────────────────────────────────── */
+    .genre-list {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .genre-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      background: var(--surface);
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+    .genre-item:last-child { border-bottom: none; }
+    .genre-item:hover { background: #fef7f0; }
+    .genre-item:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+    .genre-item.selected { background: #fff7ed; padding-left: 11px; border-left: 3px solid var(--accent); }
+
+    .genre-radio {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .genre-item.selected .genre-radio { border-color: var(--accent); background: var(--accent); }
+    .genre-item.selected .genre-radio::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .genre-info { flex: 1; min-width: 0; }
+    .genre-name { font-size: 15px; font-weight: 500; }
+    .genre-desc { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .genre-play-btn {
+      flex-shrink: 0;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .genre-play-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .genre-play-btn.playing { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+    .genre-preview-soon { flex-shrink: 0; font-size: 11px; color: var(--muted); text-align: right; line-height: 1.3; }
+    .genre-preview-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+    .genre-preview-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+    /* ── Summary ─────────────────────────────────────────────────────────── */
+    .summary {
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      font-size: 14px;
+    }
+    .summary-row { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+    .summary-label { color: var(--muted); }
+    .summary-value { font-weight: 500; text-align: right; }
+
+    /* ── Consent ─────────────────────────────────────────────────────────── */
+    .checkbox-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .checkbox-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .checkbox-label a { color: var(--accent); }
+
+    /* ── Submit ──────────────────────────────────────────────────────────── */
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 16px;
+      letter-spacing: 0.01em;
+      transition: background 0.15s, transform 0.1s;
+      -webkit-appearance: none;
+    }
+    .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .submit-error {
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--error);
+      display: none;
+    }
+    .submit-error.visible { display: block; }
+
+    /* ── Crop modal ──────────────────────────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      z-index: 100;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-backdrop.hidden { display: none; }
+
+    @media (min-width: 600px) { .modal-backdrop { align-items: center; } }
+
+    .modal-card {
+      background: var(--surface);
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 600px;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    @media (min-width: 600px) { .modal-card { border-radius: 16px; } }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 600; }
+    .modal-close {
+      width: 30px;
+      height: 30px;
+      border: none;
+      background: var(--bg);
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+    }
+
+    .crop-hint {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      padding: 8px 16px 4px;
+    }
+    .crop-container { flex: 1; overflow: hidden; background: #fff; }
+    .crop-container .cropper-canvas { background: #fff; }
+    .cropper-bg { background-image: none !important; background-color: #fff !important; }
+    .crop-container img { max-width: 100%; display: block; }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .modal-footer .btn-secondary { flex: 1; justify-content: center; }
+    .modal-footer .btn-primary { flex: 2; margin-top: 0; }
+
+    /* ── Progress overlay ────────────────────────────────────────────────── */
+    .progress-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .progress-overlay.hidden { display: none; }
+
+    .progress-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 32px 24px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+    }
+    .progress-title { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+    .progress-status { font-size: 14px; color: var(--muted); margin-bottom: 18px; min-height: 20px; }
+    .progress-bar-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s ease; width: 0%; }
+  </style>
+</head>
+<body>
+
+<!-- ─── Progress overlay ──────────────────────────────────────────────────── -->
+<div id="progress-overlay" class="progress-overlay hidden" aria-live="polite">
+  <div class="progress-card">
+    <div class="progress-title">Uploading photos…</div>
+    <div id="progress-status" class="progress-status"></div>
+    <div class="progress-bar-track">
+      <div id="progress-bar" class="progress-bar-fill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Crop modal ────────────────────────────────────────────────────────── -->
+<div id="crop-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Crop photo">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Crop photo</h3>
+    </div>
+    <p class="crop-hint">Drag to reposition · Pinch or scroll to zoom</p>
+    <div id="crop-container" class="crop-container">
+      <img id="crop-image" src="" alt="">
+    </div>
+    <div class="modal-footer">
+      <button type="button" id="crop-cancel-btn" class="btn-secondary">Remove</button>
+      <button type="button" id="crop-confirm-btn" class="btn-primary">Use this photo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Form ──────────────────────────────────────────────────────────────── -->
+<div class="form-wrapper">
+  <header class="form-header">
+    <h1>Order your Instatoast</h1>
+    <p>A personalised birthday song video, delivered to your inbox.</p>
+  </header>
+
+  <form id="order-form" novalidate>
+
+    <!-- 1. About you -->
+    <div class="form-section">
+      <h2>About you</h2>
+
+      <div class="field">
+        <label for="sender-name">Your name</label>
+        <input type="text" id="sender-name" autocomplete="given-name" placeholder="Dave">
+        <div class="error-msg" id="sender-name-error"></div>
+      </div>
+
+      <div class="field">
+        <label for="sender-email">Your email</label>
+        <input type="email" id="sender-email" autocomplete="email" placeholder="dave@example.com">
+        <div class="hint">We'll send the finished video here</div>
+        <div class="error-msg" id="sender-email-error"></div>
+      </div>
+    </div>
+
+    <!-- 2. About them -->
+    <div class="form-section">
+      <h2>About them</h2>
+
+      <div class="field">
+        <label for="recipient-name">Their name</label>
+        <input type="text" id="recipient-name" autocomplete="off" placeholder="Kenny">
+        <div class="error-msg" id="recipient-name-error"></div>
+      </div>
+
+      <div class="field">
+        <label>Tone</label>
+        <div class="tone-options">
+          <button type="button" class="tone-btn" data-tone="sweet" data-value="25">
+            Sweet
+            <div class="tone-btn-hint">Loving and sweet — safe for Grandma 👵</div>
+          </button>
+          <button type="button" class="tone-btn" data-tone="roast" data-value="75">
+            Roast
+            <div class="tone-btn-hint">Lightly tease them — no foul language allowed 🔥</div>
+          </button>
+        </div>
+        <div class="error-msg" id="tone-error"></div>
+      </div>
+
+      <div class="field">
+        <h2 style="font-size:13px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--text);margin-bottom:6px;">Tell Us One Funny Thing About Them</h2>
+        <div class="hint" style="margin-bottom:14px;">Pick one quirky habit or funny thing they always do. The weirder and more specific, the better the song!</div>
+
+        <div class="field">
+          <label for="shoutout-what">What do they do?</label>
+          <input type="text" id="shoutout-what" autocomplete="off" placeholder="Takes off her jeans">
+          <div class="error-msg" id="shoutout-what-error"></div>
+        </div>
+
+        <div class="field">
+          <label for="shoutout-when">When or where?</label>
+          <input type="text" id="shoutout-when" autocomplete="off" placeholder="The second she gets home">
+          <div class="error-msg" id="shoutout-when-error"></div>
+        </div>
+
+        <div class="field" style="margin-bottom:0;">
+          <label for="shoutout-result">What happens?</label>
+          <input type="text" id="shoutout-result" autocomplete="off" placeholder="Lives in sweats 24/7">
+          <div class="error-msg" id="shoutout-result-error"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Photos -->
+    <div class="form-section">
+      <h2>Photos</h2>
+      <div id="drop-zone" class="drop-zone">
+        <div class="drop-zone-inner">
+          <span class="drop-zone-label">Drop photos here or <button type="button" id="add-photo-btn" class="drop-zone-link">browse</button></span>
+          <span class="drop-zone-sub">Up to 10 photos · each will be cropped to fit</span>
+        </div>
+      </div>
+      <div id="thumbnail-strip" class="thumbnail-strip" style="display:none"></div>
+      <button type="button" id="add-more-btn" class="btn-secondary" style="display:none">+ Add more</button>
+      <input type="file" id="photo-file-input" accept="image/*" multiple hidden>
+      <div class="error-msg" id="photos-error"></div>
+      <div id="storage-notice" class="storage-notice" style="display:none">
+        Photos aren't saved if you refresh — re-add them if needed.
+      </div>
+    </div>
+
+    <!-- 4. Song style -->
+    <div class="form-section">
+      <h2>Song style</h2>
+      <div class="error-msg" id="genre-error"></div>
+      <div id="genre-list" class="genre-list" role="radiogroup" aria-label="Song style"></div>
+    </div>
+
+    <!-- 5. Review & submit -->
+    <div class="form-section">
+      <h2>Review &amp; submit</h2>
+      <div id="summary" class="summary"></div>
+
+      <div class="field">
+        <label class="checkbox-label">
+          <input type="checkbox" id="consent">
+          <span>I confirm I have the right to use these photos and agree to the
+            <a href="https://instatoast.com/terms" target="_blank" rel="noopener">Terms of Service</a>.</span>
+        </label>
+        <div class="error-msg" id="consent-error"></div>
+      </div>
+
+      <button type="submit" id="submit-btn" class="btn-primary">Order now →</button>
+      <div id="submit-error" class="submit-error"></div>
+    </div>
+
+  </form>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<script>
+'use strict';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG — edit freely; do not rename keys without updating the Make scenario
+// ─────────────────────────────────────────────────────────────────────────────
+const CONFIG = {
+  // Pipeline
+  webhookUrl:         'https://hook.us1.make.com/pfwk6vqgu1yljn9s6573u3qukqxjcu0j',
+  stripeUrl:          'https://buy.stripe.com/dRmaEQ7Hk95B7DEgsCeIw01',
+  gcpBucket:          'instatoast-videos',
+  gcpFolder:          'instatoast/orders',
+  signedUrlEndpoint:  'YOUR_CLOUD_FUNCTION_URL', // deployed Cloud Function HTTPS trigger (used when useSignedUrls: true)
+  useSignedUrls:      false, // set to true once Cloud Function is deployed; false = direct public PUT (testing only)
+
+  // Limits
+  minPhotos:          10,
+  maxPhotos:          10,
+
+  // Crop — must match FFmpeg video template exactly, do not round
+  cropWidth:          864,
+  cropHeight:         1115,
+
+  // Occasion — hardcoded v1, not surfaced in UI
+  occasion:           'birthday',
+
+  // Tone values sent in webhook payload
+  toneSweet:          25,
+  toneRoast:          75,
+
+  // Genres — add entries here to add options in the UI
+  // key:      sent verbatim in webhook payload (don't rename without updating Make)
+  // audioUrl: set to 'PLACEHOLDER' or '' to show "preview coming soon" instead of play button
+  genres: [
+    {
+      key:         'reggae',
+      name:        'Reggae',
+      description: 'Laid back, warm, and full of good vibes',
+      audioUrl:    'https://storage.googleapis.com/instatoast-videos/instatoast/assets/hb_reggae.mp3',
+    },
+    {
+      key:         'genre_2',
+      name:        'PLACEHOLDER',
+      description: 'PLACEHOLDER',
+      audioUrl:    'PLACEHOLDER',
+    },
+    {
+      key:         'genre_3',
+      name:        'PLACEHOLDER',
+      description: 'PLACEHOLDER',
+      audioUrl:    'PLACEHOLDER',
+    },
+  ],
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────────────────────
+const state = {
+  photos:         [],    // [{ blob: Blob, thumbUrl: string }]
+  selectedGenre:  null,  // genre key string
+  tone:           null,  // 'sweet' | 'roast'
+  activeAudio:    null,  // Audio currently playing
+  activePlayBtn:  null,  // button DOM node in "playing" state
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function isValidAudioUrl(url) {
+  return typeof url === 'string' && url.length > 0 && url !== 'PLACEHOLDER' && url.startsWith('http');
+}
+
+function isValidGenre(g) {
+  return g.name !== 'PLACEHOLDER' && g.description !== 'PLACEHOLDER';
+}
+
+function generateOrderId() {
+  const now = new Date();
+  const yy  = String(now.getFullYear()).slice(2);
+  const mm  = String(now.getMonth() + 1).padStart(2, '0');
+  const dd  = String(now.getDate()).padStart(2, '0');
+  const hh  = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const rand = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return `${yy}${mm}${dd}-${hh}${min}-${rand}`;
+}
+
+function isValidEmail(v) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LocalStorage
+// ─────────────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'instatoast_v1';
+
+function saveToStorage() {
+  const data = {
+    senderName:    document.getElementById('sender-name').value,
+    senderEmail:   document.getElementById('sender-email').value,
+    recipientName: document.getElementById('recipient-name').value,
+    shoutoutWhat:  document.getElementById('shoutout-what').value,
+    shoutoutWhen:  document.getElementById('shoutout-when').value,
+    shoutoutResult:document.getElementById('shoutout-result').value,
+    tone:          state.tone,
+    genre:         state.selectedGenre,
+  };
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+}
+
+function restoreFromStorage() {
+  let data;
+  try { data = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (_) {}
+  if (!data) return;
+
+  if (data.senderName)     document.getElementById('sender-name').value     = data.senderName;
+  if (data.senderEmail)    document.getElementById('sender-email').value    = data.senderEmail;
+  if (data.recipientName)  document.getElementById('recipient-name').value  = data.recipientName;
+  if (data.shoutoutWhat)   document.getElementById('shoutout-what').value   = data.shoutoutWhat;
+  if (data.shoutoutWhen)   document.getElementById('shoutout-when').value   = data.shoutoutWhen;
+  if (data.shoutoutResult) document.getElementById('shoutout-result').value = data.shoutoutResult;
+
+  if (data.tone) selectTone(data.tone);
+
+  if (data.genre) {
+    state.selectedGenre = data.genre;
+    document.querySelectorAll('.genre-item').forEach(el => {
+      el.classList.toggle('selected', el.dataset.key === data.genre);
+      el.setAttribute('aria-checked', String(el.dataset.key === data.genre));
+    });
+  }
+  updateSummary();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MediaSlot — photo queue (type: 'photo'; extensible to 'video')
+// ─────────────────────────────────────────────────────────────────────────────
+const MediaSlot = {
+  type:              'photo',
+  cropper:           null,
+  pendingObjectUrl:  null,
+
+  cropQueue: [],
+  queueTotal: 0,
+
+  init() {
+    // Browse link inside drop zone + "Add more" button both open the picker
+    document.getElementById('add-photo-btn').addEventListener('click', e => { e.stopPropagation(); this.openFilePicker(); });
+    document.getElementById('add-more-btn').addEventListener('click', () => this.openFilePicker());
+
+    // Click anywhere on the drop zone also opens picker
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('click', () => this.openFilePicker());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      this.enqueueFiles(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')));
+    });
+
+    document.getElementById('photo-file-input').addEventListener('change', e => {
+      this.enqueueFiles(Array.from(e.target.files));
+      e.target.value = ''; // reset so the same file can be re-picked
+    });
+    document.getElementById('crop-confirm-btn').addEventListener('click', () => this.confirmCrop());
+    document.getElementById('crop-cancel-btn').addEventListener('click', () => this.closeCropModal());
+  },
+
+  enqueueFiles(files) {
+    const slots = CONFIG.maxPhotos - state.photos.length;
+    files.slice(0, slots).forEach(f => this.cropQueue.push(f));
+    this.queueTotal = this.cropQueue.length;
+    this.processQueue();
+  },
+
+  openFilePicker() {
+    if (state.photos.length >= CONFIG.maxPhotos) return;
+    document.getElementById('photo-file-input').click();
+  },
+
+  processQueue() {
+    if (this.cropQueue.length === 0) return;
+    const next = this.cropQueue.shift();
+    this.resizeFile(next, 2000).then(url => this.openCropModal(url));
+  },
+
+  resizeFile(file, maxPx) {
+    return new Promise(resolve => {
+      const src = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(src);
+        const { naturalWidth: w, naturalHeight: h } = img;
+        const scale = Math.min(1, maxPx / Math.max(w, h));
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(w * scale);
+        canvas.height = Math.round(h * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => resolve(URL.createObjectURL(blob)), 'image/jpeg', 0.92);
+      };
+      img.src = src;
+    });
+  },
+
+  openCropModal(objectUrl) {
+    if (this.pendingObjectUrl) URL.revokeObjectURL(this.pendingObjectUrl);
+    this.pendingObjectUrl = objectUrl;
+
+    const img = document.getElementById('crop-image');
+    img.src = this.pendingObjectUrl;
+
+    const position = this.queueTotal - this.cropQueue.length;
+    const title = this.queueTotal > 1 ? `Crop photo ${position} of ${this.queueTotal}` : 'Crop photo';
+    document.querySelector('#crop-modal .modal-header h3').textContent = title;
+
+    document.getElementById('crop-modal').classList.remove('hidden');
+    document.getElementById('crop-container').classList.add('hidden');
+    document.querySelector('.crop-hint').style.visibility = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    img.onload = () => {
+      if (this.cropper) { this.cropper.destroy(); this.cropper = null; }
+      this.cropper = new Cropper(img, {
+        aspectRatio:        CONFIG.cropWidth / CONFIG.cropHeight,
+        viewMode:           1,
+        dragMode:           'move',
+        autoCropArea:       1,
+        restore:            false,
+        guides:             false,
+        center:             false,
+        highlight:          false,
+        cropBoxMovable:     false,
+        cropBoxResizable:   false,
+        toggleDragModeOnDblclick: false,
+        ready() {
+          document.getElementById('crop-container').classList.remove('hidden');
+          document.querySelector('.crop-hint').style.visibility = '';
+        },
+      });
+    };
+  },
+
+  confirmCrop() {
+    if (!this.cropper) return;
+    const canvas = this.cropper.getCroppedCanvas({
+      width:                  CONFIG.cropWidth,
+      height:                 CONFIG.cropHeight,
+      imageSmoothingEnabled:  true,
+      imageSmoothingQuality:  'high',
+    });
+    canvas.toBlob(blob => {
+      const thumbUrl = canvas.toDataURL('image/jpeg', 0.8);
+      state.photos.push({ blob, thumbUrl });
+      this.closeCropModal();
+      this.renderThumbnails();
+      updateAddPhotoBtn();
+      clearError('photos-error');
+      updateSummary();
+      saveToStorage();
+      if (state.photos.length === 1) {
+        document.getElementById('storage-notice').style.display = 'block';
+      }
+    }, 'image/jpeg', 0.92);
+  },
+
+  closeCropModal() {
+    document.getElementById('crop-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+    if (this.cropper) { this.cropper.destroy(); this.cropper = null; }
+    if (this.pendingObjectUrl) { URL.revokeObjectURL(this.pendingObjectUrl); this.pendingObjectUrl = null; }
+    document.getElementById('crop-image').src = '';
+    if (state.photos.length < CONFIG.maxPhotos && this.cropQueue.length > 0) {
+      this.processQueue();
+    } else {
+      this.cropQueue = [];
+      this.queueTotal = 0;
+    }
+  },
+
+  renderThumbnails() {
+    const strip = document.getElementById('thumbnail-strip');
+    strip.innerHTML = '';
+    state.photos.forEach((photo, i) => {
+      const div = document.createElement('div');
+      div.className = 'thumbnail';
+      div.innerHTML = `
+        <img src="${photo.thumbUrl}" alt="Photo ${i + 1}">
+        <button type="button" class="thumbnail-remove" aria-label="Remove photo ${i + 1}">✕</button>
+      `;
+      div.querySelector('.thumbnail-remove').addEventListener('click', () => this.removePhoto(i));
+      strip.appendChild(div);
+    });
+  },
+
+  removePhoto(index) {
+    state.photos.splice(index, 1);
+    this.renderThumbnails();
+    updateAddPhotoBtn();
+    updateSummary();
+    saveToStorage();
+    if (state.photos.length === 0) document.getElementById('storage-notice').style.display = 'none';
+  },
+};
+
+function updateAddPhotoBtn() {
+  const count    = state.photos.length;
+  const dropZone = document.getElementById('drop-zone');
+  const strip    = document.getElementById('thumbnail-strip');
+  const addMore  = document.getElementById('add-more-btn');
+
+  if (count === 0) {
+    dropZone.style.display = '';
+    strip.style.display    = 'none';
+    addMore.style.display  = 'none';
+  } else {
+    dropZone.style.display = 'none';
+    strip.style.display    = '';
+    addMore.style.display  = count >= CONFIG.maxPhotos ? 'none' : '';
+    addMore.textContent    = `+ Add more (${count}/${CONFIG.maxPhotos})`;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tone buttons
+// ─────────────────────────────────────────────────────────────────────────────
+function selectTone(key) {
+  state.tone = key;
+  document.querySelectorAll('.tone-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.tone === key);
+  });
+  clearError('tone-error');
+}
+
+function initToneButtons() {
+  document.querySelectorAll('.tone-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectTone(btn.dataset.tone);
+      updateSummary();
+      saveToStorage();
+    });
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Genre list
+// ─────────────────────────────────────────────────────────────────────────────
+function renderGenres() {
+  const list = document.getElementById('genre-list');
+  CONFIG.genres.forEach(genre => {
+    if (!isValidGenre(genre)) return;
+
+    const hasAudio = isValidAudioUrl(genre.audioUrl);
+    const item = document.createElement('div');
+    item.className = 'genre-item';
+    item.dataset.key = genre.key;
+    item.setAttribute('role', 'radio');
+    item.setAttribute('aria-checked', 'false');
+    item.setAttribute('tabindex', '0');
+
+    item.innerHTML = `
+      <div class="genre-radio" aria-hidden="true"></div>
+      <div class="genre-info">
+        <div class="genre-name">${genre.name}</div>
+        <div class="genre-desc">${genre.description}</div>
+      </div>
+      <div class="genre-preview">
+        ${hasAudio
+          ? `<div class="genre-preview-wrap"><button type="button" class="genre-play-btn" data-audio="${genre.audioUrl}" aria-label="Preview ${genre.name}">▶</button><span class="genre-preview-label">Preview style</span></div>`
+          : `<span class="genre-preview-soon">preview<br>coming soon</span>`}
+      </div>
+    `;
+
+    // Select on row click (but not on play button)
+    item.addEventListener('click', e => {
+      if (e.target.closest('.genre-play-btn')) return;
+      selectGenre(genre.key);
+    });
+    item.addEventListener('keydown', e => {
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); selectGenre(genre.key); }
+    });
+
+    if (hasAudio) {
+      item.querySelector('.genre-play-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        toggleAudioPreview(e.currentTarget, genre.audioUrl);
+      });
+    }
+
+    list.appendChild(item);
+  });
+}
+
+function selectGenre(key) {
+  state.selectedGenre = key;
+  document.querySelectorAll('.genre-item').forEach(el => {
+    const active = el.dataset.key === key;
+    el.classList.toggle('selected', active);
+    el.setAttribute('aria-checked', String(active));
+  });
+  clearError('genre-error');
+  updateSummary();
+  saveToStorage();
+}
+
+function toggleAudioPreview(btn, audioUrl) {
+  // Stop anything currently playing
+  if (state.activeAudio && !state.activeAudio.paused) {
+    state.activeAudio.pause();
+    state.activeAudio.currentTime = 0;
+    if (state.activePlayBtn) {
+      state.activePlayBtn.classList.remove('playing');
+      state.activePlayBtn.textContent = '▶';
+    }
+    // If clicking the same button, just stop
+    if (state.activePlayBtn === btn) {
+      state.activeAudio = null;
+      state.activePlayBtn = null;
+      return;
+    }
+  }
+  const audio = new Audio(audioUrl);
+  state.activeAudio   = audio;
+  state.activePlayBtn = btn;
+  btn.classList.add('playing');
+  btn.textContent = '■';
+  audio.play().catch(() => { btn.classList.remove('playing'); btn.textContent = '▶'; });
+  audio.addEventListener('ended', () => {
+    btn.classList.remove('playing');
+    btn.textContent = '▶';
+    state.activeAudio   = null;
+    state.activePlayBtn = null;
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Summary
+// ─────────────────────────────────────────────────────────────────────────────
+function updateSummary() {
+  const recipient   = document.getElementById('recipient-name').value.trim() || '—';
+  const photoCount  = state.photos.length || '—';
+  const genreName   = state.selectedGenre
+    ? (CONFIG.genres.find(g => g.key === state.selectedGenre)?.name ?? state.selectedGenre)
+    : '—';
+  document.getElementById('summary').innerHTML = `
+    <div class="summary-row"><span class="summary-label">For</span><span class="summary-value">${recipient}</span></div>
+    <div class="summary-row"><span class="summary-label">Photos</span><span class="summary-value">${photoCount}</span></div>
+    <div class="summary-row"><span class="summary-label">Style</span><span class="summary-value">${genreName}</span></div>
+    <div class="summary-row"><span class="summary-label">Tone</span><span class="summary-value">${state.tone === 'sweet' ? 'Sweet' : state.tone === 'roast' ? 'Roast' : '—'}</span></div>
+  `;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Validation
+// ─────────────────────────────────────────────────────────────────────────────
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('visible');
+  const inputId = id.replace(/-error$/, '');
+  document.getElementById(inputId)?.classList.add('invalid');
+}
+
+function clearError(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = '';
+  el.classList.remove('visible');
+  const inputId = id.replace(/-error$/, '');
+  document.getElementById(inputId)?.classList.remove('invalid');
+}
+
+function validateField(id) {
+  const val = document.getElementById(id)?.value.trim() ?? '';
+  if (id === 'sender-name')    { if (!val) { showError('sender-name-error',       'Your name is required.');                          return false; } }
+  if (id === 'sender-email')   { if (!val) { showError('sender-email-error',      'Your email is required.');                         return false; }
+                                  if (!isValidEmail(val)) { showError('sender-email-error', 'Enter a valid email address (e.g. you@example.com).'); return false; } }
+  if (id === 'recipient-name') { if (!val) { showError('recipient-name-error',    'Their name is required.');                         return false; } }
+  if (id === 'shoutout-what')  { if (!val) { showError('shoutout-what-error',     'Tell us what they do.');                           return false; } }
+  if (id === 'shoutout-when')  { if (!val) { showError('shoutout-when-error',     'Tell us when or where.');                          return false; } }
+  if (id === 'shoutout-result'){ if (!val) { showError('shoutout-result-error',   'Tell us what happens.');                           return false; } }
+  clearError(`${id}-error`);
+  return true;
+}
+
+function validateAll() {
+  let ok = true;
+  ['sender-name', 'sender-email', 'recipient-name'].forEach(id => { if (!validateField(id)) ok = false; });
+  if (!state.tone) { showError('tone-error', 'Please choose a tone.'); ok = false; } else clearError('tone-error');
+  ['shoutout-what', 'shoutout-when', 'shoutout-result'].forEach(id => { if (!validateField(id)) ok = false; });
+  const need = CONFIG.minPhotos - state.photos.length;
+  if (need > 0) { showError('photos-error', `Add ${need} more photo${need === 1 ? '' : 's'} to continue (${CONFIG.minPhotos} required).`); ok = false; } else clearError('photos-error');
+  if (!state.selectedGenre) { showError('genre-error', 'Select a song style.'); ok = false; } else clearError('genre-error');
+  if (!document.getElementById('consent').checked) { showError('consent-error', 'You must agree to the Terms of Service.'); ok = false; } else clearError('consent-error');
+  return ok;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Upload
+// ─────────────────────────────────────────────────────────────────────────────
+function setProgress(done, total, statusText) {
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('progress-bar').style.width = `${pct}%`;
+  document.getElementById('progress-status').textContent = statusText;
+}
+
+// Returns { uploadUrl, publicUrl } for a single photo slot.
+// When useSignedUrls is true, asks the Cloud Function for a signed PUT URL.
+// When false, constructs the public GCS URL directly (bucket must allow allUsers objectCreator).
+async function resolveUploadTarget(orderId, photoIndex) {
+  const filename  = `photo_${String(photoIndex).padStart(2, '0')}.jpg`;
+  const gcsPath   = `${CONFIG.gcpFolder}/${orderId}/media_inputs/${filename}`;
+  const publicUrl = `https://storage.googleapis.com/${CONFIG.gcpBucket}/${gcsPath}`;
+
+  if (CONFIG.useSignedUrls) {
+    const res = await fetch(CONFIG.signedUrlEndpoint, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ orderId, photoIndex, contentType: 'image/jpeg' }),
+    });
+    if (!res.ok) throw new Error(`Signed URL request failed (${res.status})`);
+    const { signedUrl } = await res.json();
+    return { uploadUrl: signedUrl, publicUrl };
+  }
+
+  // Direct public PUT — temporary, for testing only
+  const uploadUrl = `https://storage.googleapis.com/${CONFIG.gcpBucket}/${gcsPath}`;
+  return { uploadUrl, publicUrl };
+}
+
+async function uploadAllPhotos(orderId) {
+  const urls  = [];
+  const total = state.photos.length;
+  for (let i = 0; i < total; i++) {
+    setProgress(i, total, `Photo ${i + 1} of ${total}…`);
+    const { uploadUrl, publicUrl } = await resolveUploadTarget(orderId, i + 1);
+    const res = await fetch(uploadUrl, {
+      method:  'PUT',
+      headers: { 'Content-Type': 'image/jpeg' },
+      body:    state.photos[i].blob,
+    });
+    if (!res.ok) throw new Error(`Photo ${i + 1} upload failed (${res.status})`);
+    urls.push(publicUrl);
+  }
+  setProgress(total, total, 'Sending your order…');
+  return urls;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Submit
+// ─────────────────────────────────────────────────────────────────────────────
+async function handleSubmit(e) {
+  e.preventDefault();
+  const submitError = document.getElementById('submit-error');
+  submitError.classList.remove('visible');
+
+  if (!validateAll()) {
+    document.querySelector('.error-msg.visible')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  const submitBtn = document.getElementById('submit-btn');
+  submitBtn.disabled = true;
+
+  const orderId = generateOrderId();
+  document.getElementById('progress-overlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const photoUrls = await uploadAllPhotos(orderId);
+
+    const payload = {
+      order_id:       orderId,
+      sender_name:    document.getElementById('sender-name').value.trim(),
+      sender_email:   document.getElementById('sender-email').value.trim(),
+      recipient_name: document.getElementById('recipient-name').value.trim(),
+      occasion:       CONFIG.occasion,
+      shoutout:       [
+                        document.getElementById('shoutout-what').value.trim(),
+                        document.getElementById('shoutout-when').value.trim(),
+                        document.getElementById('shoutout-result').value.trim(),
+                      ].filter(Boolean).join(' | '),
+      tone:           state.tone === 'sweet' ? CONFIG.toneSweet : CONFIG.toneRoast,
+      genre:          state.selectedGenre,
+      photo_urls:     photoUrls,
+      photo_count:    photoUrls.length,
+      consent:        document.getElementById('consent').checked,
+      submitted_at:   new Date().toISOString(),
+    };
+
+    const webhookRes = await fetch(CONFIG.webhookUrl, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+    });
+    if (!webhookRes.ok) throw new Error(`Webhook failed (${webhookRes.status})`);
+
+    try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+    window.location.href = CONFIG.stripeUrl;
+
+  } catch (err) {
+    document.getElementById('progress-overlay').classList.add('hidden');
+    document.body.style.overflow = '';
+    submitBtn.disabled = false;
+    submitError.textContent = `Something went wrong: ${err.message}. Your photos are still queued — try submitting again.`;
+    submitError.classList.add('visible');
+    submitError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderGenres();
+  initToneButtons();
+  MediaSlot.init();
+  updateSummary();
+  restoreFromStorage();
+
+  // Text input listeners
+  ['sender-name', 'sender-email', 'recipient-name'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input',  () => { saveToStorage(); updateSummary(); });
+    el.addEventListener('blur',   () => validateField(id));
+  });
+
+  ['shoutout-what', 'shoutout-when', 'shoutout-result'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => { saveToStorage(); updateSummary(); });
+    el.addEventListener('blur',  () => validateField(id));
+  });
+
+  document.getElementById('consent').addEventListener('change', () => {
+    if (document.getElementById('consent').checked) clearError('consent-error');
+  });
+
+  document.getElementById('order-form').addEventListener('submit', handleSubmit);
+});
+</script>
+</body>
+</html>
