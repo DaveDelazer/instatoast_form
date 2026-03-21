@@ -1195,7 +1195,7 @@ function updateSummary() {
     summaryRow('To',          toVal,                           !!toVal) +
     summaryRow('Tone',        tone,                            !!tone) +
     summaryRow('Genre',       genreName,                       !!genreName) +
-    summaryRow('Photos',      `${photoCount} / ${CONFIG.minPhotos}`, photoCount >= CONFIG.minPhotos) +
+    summaryRow('Photos',      `${photoCount}/${CONFIG.minPhotos} photos`, photoCount >= CONFIG.minPhotos) +
     summaryRow('Their story', story,                           storyFilled);
 }
 
