@@ -119,25 +119,89 @@ All changes in `index.html`, pushed to `main` on GitHub. GitHub Pages auto-deplo
 
 ---
 
-## Session 3 — 2026-03-21
+## Session 3 — 2026-03-25
 
 ### What changed
 
-No code changes this session.
+**Stripe embedded checkout** — replaced the Stripe redirect with an in-page payment modal.
 
-Confirmed that the payload already includes everything requested:
-- `shoutout_action`, `shoutout_when`, `shoutout_result`, and `shoutout_full` are all sent in the webhook payload
-- `occasion` is already in the payload, hardcoded to `'birthday'` via `CONFIG.occasion`, hidden from the UI — ready to be wired to a selector in a future session when more occasions are added
+**`cloud-function/index.js`** — new export `createCheckoutSession`:
+- Creates a Stripe Checkout Session with `ui_mode: 'embedded'`
+- Returns `clientSecret` to the frontend
+- Reads `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `RETURN_URL` from env vars
+- Deployed to `us-central1` as a separate Cloud Function
+
+**`cloud-function/package.json`** — added `stripe: ^17.0.0` dependency
+
+**`cloud-function/deploy-checkout.sh`** — deploy script for the new function
+
+**`index.html`:**
+- Loads `stripe.js` from Stripe CDN in `<head>`
+- Payment modal UI (slide-up from bottom on mobile, centered on desktop) with fade+rise animation; keyframes on `.payment-modal__card` are the hook for future custom animation
+- Order complete screen (shown when returning from Stripe with `?order_complete=true`)
+- `CONFIG.stripeUrl` removed; replaced with `CONFIG.stripePublishableKey` and `CONFIG.checkoutSessionUrl`
+- `openPaymentModal(orderId)` — calls Cloud Function, mounts Stripe embedded checkout
+- `showOrderComplete()` — hides form, shows confirmation screen
+- `handleSubmit` now calls `openPaymentModal` instead of redirecting
+
+Also confirmed (no code change needed): payload already includes `shoutout_action`, `shoutout_when`, `shoutout_result`, `shoutout_full`, and `occasion` — all present from Session 2.
+
+### GCP changes
+
+| Change | Details |
+|---|---|
+| New Cloud Function `createCheckoutSession` | Deployed to `us-central1`, env vars: `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID=price_1Shexr34CKOoUJtzJ9HC4Jmw`, `RETURN_URL=https://davedelazer.github.io/instatoast_form` |
 
 ### Current state
 
-Same as Session 2 — no changes deployed.
+- Stripe embedded checkout live on GitHub Pages
+- `createCheckoutSession` Cloud Function deployed
+- CORS on `createCheckoutSession` locked to `https://order.instatoast.com` — will block calls from GitHub Pages URL until DNS is live (or CORS is temporarily widened for testing)
+- `RETURN_URL` set to GitHub Pages URL for pre-DNS testing
 
 ### Pending before go-live
 
-- [ ] End-to-end test: upload → webhook → Stripe redirect
+- [ ] End-to-end test: upload → webhook → embedded checkout → order complete screen
 - [ ] Mobile testing
 - [ ] Set up `order.instatoast.com` CNAME in Porkbun → GitHub Pages (Dave to do)
+- [ ] Update `RETURN_URL` env var on `createCheckoutSession` to `https://order.instatoast.com` once DNS is live
+- [ ] Update CORS on `createCheckoutSession` to `https://order.instatoast.com` (currently matches — but verify after DNS)
 - [ ] Tighten GCS CORS `origin` from `*` to actual form URL once DNS is live
 - [ ] Remove `allUsers` objectCreator from `instatoast-videos` once signed URLs confirmed working
 - [ ] Upload Country and Pop Punk audio preview files to GCS if not already done (`hb_country.mp3`, `hb_pop_punk.mp3`)
+- [ ] Consider widening CORS on `createCheckoutSession` temporarily to GitHub Pages URL for pre-DNS testing
+
+---
+
+## Session 4 — 2026-03-27
+
+### What changed
+
+**`cloud-function/index.js`:**
+- Added `allow_promotion_codes: true` — promo code field now shows in embedded checkout
+- Added `customer_email` — passed from form to checkout session to pre-fill Stripe's email field (customer can still change it)
+- Removed `automatic_payment_methods: { enabled: true }` — invalid for Checkout Sessions API; payment methods are controlled via Stripe Dashboard instead
+
+**`cloud-function/deploy-checkout.sh`:**
+- Updated `RETURN_URL` from GitHub Pages URL to `https://order.instatoast.com` (DNS is now live)
+
+**`index.html`:**
+- `openPaymentModal(orderId)` → `openPaymentModal(orderId, customerEmail)` — reads sender email from form and passes it to the Cloud Function
+
+### Stripe Dashboard changes (Dave)
+- Payment methods enabled under Settings → Payment methods
+- Stripe webhook added under Developers → Webhooks, pointing to a new Make scenario
+- Listens for `checkout.session.completed` — Make matches on `data > object > client_reference_id` (= orderId) to find the Airtable record and mark it paid
+
+### Current state
+- DNS live at `order.instatoast.com`
+- Full end-to-end flow confirmed working: upload → webhook → embedded checkout → order complete screen
+- Two-webhook architecture: form submit fires Make webhook (captures abandoned carts), Stripe fires on payment confirmed
+- Promo codes working — create coupons in Stripe Dashboard → Products → Coupons
+
+### Pending
+- [ ] Tighten GCS CORS `origin` from `*` to `https://order.instatoast.com`
+- [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
+- [ ] Verify Country and Pop Punk audio preview files are in GCS (`hb_country.mp3`, `hb_pop_punk.mp3`)
+- [ ] Add dancing toast animation to the order complete screen (`showOrderComplete()` in `index.html`)
+- [ ] Clean up Stripe checkout appearance/payment method ordering in Dashboard
