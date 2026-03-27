@@ -82,7 +82,7 @@ exports.createCheckoutSession = async (req, res) => {
     return;
   }
 
-  const { orderId } = req.body || {};
+  const { orderId, customerEmail } = req.body || {};
 
   if (!orderId) {
     res.status(400).json({ error: 'Missing required field: orderId' });
@@ -97,13 +97,18 @@ exports.createCheckoutSession = async (req, res) => {
   const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
   try {
-    const session = await stripe.checkout.sessions.create({
-      ui_mode:             'embedded',
-      line_items:          [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
-      mode:                'payment',
-      client_reference_id: orderId,
-      return_url:          `${process.env.RETURN_URL}?order_complete=true&session_id={CHECKOUT_SESSION_ID}`,
-    });
+    const sessionParams = {
+      ui_mode:                    'embedded',
+      line_items:                 [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
+      mode:                       'payment',
+      client_reference_id:        orderId,
+      return_url:                 `${process.env.RETURN_URL}?order_complete=true&session_id={CHECKOUT_SESSION_ID}`,
+      allow_promotion_codes:      true,
+      automatic_payment_methods:  { enabled: true },
+    };
+    if (customerEmail) sessionParams.customer_email = customerEmail;
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     res.json({ clientSecret: session.client_secret });
 

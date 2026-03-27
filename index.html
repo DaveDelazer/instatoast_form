@@ -1390,13 +1390,13 @@ async function uploadAllPhotos(orderId) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Payment modal
 // ─────────────────────────────────────────────────────────────────────────────
-async function openPaymentModal(orderId) {
+async function openPaymentModal(orderId, customerEmail) {
   setProgress(10, 10, 'Opening payment…');
 
   const res = await fetch(CONFIG.checkoutSessionUrl, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ orderId }),
+    body:    JSON.stringify({ orderId, customerEmail }),
   });
   if (!res.ok) throw new Error(`Payment session failed (${res.status})`);
   const { clientSecret } = await res.json();
@@ -1467,7 +1467,8 @@ async function handleSubmit(e) {
     if (!webhookRes.ok) throw new Error(`Webhook failed (${webhookRes.status})`);
 
     try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
-    await openPaymentModal(orderId);
+    const senderEmail = document.getElementById('sender-email').value.trim();
+    await openPaymentModal(orderId, senderEmail);
 
   } catch (err) {
     document.getElementById('progress-overlay').classList.add('hidden');

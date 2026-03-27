@@ -10,4 +10,4 @@ gcloud functions deploy createCheckoutSession \
   --entry-point=createCheckoutSession \
   --trigger-http \
   --allow-unauthenticated \
-  --set-env-vars "STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY},STRIPE_PRICE_ID=price_1Shexr34CKOoUJtzJ9HC4Jmw,RETURN_URL=https://davedelazer.github.io/instatoast_form"
+  --set-env-vars "STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY},STRIPE_PRICE_ID=price_1Shexr34CKOoUJtzJ9HC4Jmw,RETURN_URL=https://order.instatoast.com"
