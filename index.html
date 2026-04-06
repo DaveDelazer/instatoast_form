@@ -161,6 +161,7 @@
       overflow: hidden;
       border: 1.5px solid var(--border);
       background: var(--surface);
+      cursor: grab;
     }
     .thumbnail img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .thumbnail-remove {
@@ -205,34 +206,6 @@
       color: var(--muted);
       margin-top: 10px;
     }
-
-    .drop-zone {
-      border: 1.5px dashed var(--border);
-      border-radius: var(--radius);
-      padding: 32px 16px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .drop-zone:hover, .drop-zone.drag-over {
-      border-color: var(--accent);
-      background: #fdf0f8;
-    }
-    .drop-zone-inner { display: flex; flex-direction: column; gap: 6px; align-items: center; }
-    .drop-zone-label { font-size: 14px; color: var(--text); }
-    .drop-zone-link {
-      background: none;
-      border: none;
-      padding: 0;
-      font-size: inherit;
-      font-family: inherit;
-      color: var(--accent);
-      cursor: pointer;
-      font-weight: 500;
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-    .drop-zone-sub { font-size: 13px; color: var(--muted); }
 
     /* ── Genre list — compact radio style ────────────────────────────────── */
     .genre-list {
@@ -587,6 +560,187 @@
     .order-complete__icon { font-size: 52px; margin-bottom: 16px; }
     .order-complete__title { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
     .order-complete__msg { font-size: 15px; color: var(--muted); line-height: 1.6; }
+
+    /* ── Media section ───────────────────────────────────────────────────── */
+    .media-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+
+    .media-bookend__label {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    /* Media choice buttons */
+    .media-choice-label {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    .media-choice-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .media-choice-btn {
+      padding: 12px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      text-align: center;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .media-choice-btn:hover { border-color: var(--accent); }
+    .media-choice-btn.selected {
+      border-color: var(--accent);
+      background: #fdf0f8;
+      color: var(--accent);
+    }
+
+    /* Video subsection */
+    .media-subsection__title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* Video clips list */
+    .video-clips-list { margin-bottom: 12px; }
+    .video-clip-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .video-clip-item:last-child { border-bottom: none; }
+    .video-clip-thumb {
+      width: 60px;
+      height: 40px;
+      border-radius: 4px;
+      object-fit: cover;
+      flex-shrink: 0;
+      display: block;
+    }
+    .video-clip-thumb--placeholder {
+      background: #f0ebfa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      width: 60px;
+      height: 40px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .video-clip-info { flex: 1; min-width: 0; }
+    .video-clip-name {
+      font-size: 14px;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .video-clip-duration { font-size: 12px; color: var(--muted); }
+    .video-clip-remove {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.07);
+      color: var(--muted);
+      border: none;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.1s, color 0.1s;
+    }
+    .video-clip-remove:hover { background: #fef2f2; color: var(--error); }
+
+    /* Video scrubber */
+    .video-scrubber-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 12px 0 6px;
+    }
+    .video-scrubber-track {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .video-scrubber-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    .video-scrubber-label {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .photos-needed-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* Video error */
+    .video-add-error {
+      font-size: 13px;
+      color: var(--error);
+      margin-top: 8px;
+      display: none;
+    }
+    .video-add-error.visible { display: block; }
+
+    /* Middle photos header */
+    .middle-photos-header {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .middle-photos-header.met { color: #22c55e; }
+
+    /* Switch link */
+    .media-switch-link {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      text-decoration-style: dashed;
+      margin-top: 12px;
+      display: block;
+    }
+    .media-switch-link:hover { color: var(--accent); }
+
+    /* SortableJS drag */
+    .sortable-ghost { opacity: 0.35; }
   </style>
 </head>
 <body>
@@ -613,7 +767,7 @@
 <!-- ─── Progress overlay ──────────────────────────────────────────────────── -->
 <div id="progress-overlay" class="progress-overlay hidden" aria-live="polite">
   <div class="progress-card">
-    <div class="progress-title">Uploading photos…</div>
+    <div class="progress-title">Uploading your media…</div>
     <div id="progress-status" class="progress-status"></div>
     <div class="progress-bar-track">
       <div id="progress-bar" class="progress-bar-fill"></div>
@@ -707,21 +861,69 @@
       </div>
     </div>
 
-    <!-- 3. Photos -->
+    <!-- 3. Photos & video -->
     <div class="form-section">
-      <h2>Photos</h2>
-      <div id="drop-zone" class="drop-zone">
-        <div class="drop-zone-inner">
-          <span class="drop-zone-label">Drop photos here or <button type="button" id="add-photo-btn" class="drop-zone-link">browse</button></span>
-          <span class="drop-zone-sub">10 photos required · each will be cropped to fit</span>
+      <h2>Photos &amp; video</h2>
+
+      <!-- Step 1: Opening photo — always visible -->
+      <div class="media-bookend">
+        <span class="media-bookend__label">Opening photo — the first thing people see.</span>
+        <div id="opener-slot"></div>
+        <div class="error-msg" id="opener-error"></div>
+      </div>
+
+      <!-- Step 2: Closing photo — shown once opener is set -->
+      <div id="closer-section" style="display:none">
+        <div class="media-divider"></div>
+        <div class="media-bookend">
+          <span class="media-bookend__label">Closing photo — the last thing people see.</span>
+          <div id="closer-slot"></div>
+          <div class="error-msg" id="closer-error"></div>
         </div>
       </div>
-      <div id="thumbnail-strip" class="thumbnail-strip" style="display:none"></div>
-      <button type="button" id="add-more-btn" class="btn-secondary" style="display:none">+ Add more</button>
-      <input type="file" id="photo-file-input" accept="image/*" multiple hidden>
-      <div class="error-msg" id="photos-error"></div>
+
+      <!-- Step 3: Media type choice — shown once both bookends are set -->
+      <div id="media-choice-section" style="display:none">
+        <div class="media-divider"></div>
+        <div class="media-choice-label">How do you want to fill the rest?</div>
+        <div class="media-choice-btns">
+          <button type="button" class="media-choice-btn" data-choice="photos" id="choice-photos-btn">📷 Photos only</button>
+          <button type="button" class="media-choice-btn" data-choice="video" id="choice-video-btn">🎬 Photos + video</button>
+        </div>
+        <div class="error-msg" id="media-choice-error"></div>
+      </div>
+
+      <!-- Step 4a: Video clips — shown if "photos + video" chosen -->
+      <div id="video-section" style="display:none">
+        <div class="media-divider"></div>
+        <div class="media-subsection__title">Video clips</div>
+        <div id="video-clips-list" class="video-clips-list"></div>
+        <button type="button" id="add-video-btn" class="btn-secondary">+ Add video clip</button>
+        <input type="file" id="video-file-input" accept="video/mp4,video/quicktime,video/webm" multiple hidden>
+        <div id="video-add-error" class="video-add-error"></div>
+        <div class="video-scrubber-wrap">
+          <div class="video-scrubber-track">
+            <div id="video-scrubber-fill" class="video-scrubber-fill"></div>
+          </div>
+          <span class="video-scrubber-label"><span id="video-total-label">0s</span> / 16s</span>
+        </div>
+        <div id="photos-needed-label" class="photos-needed-label">Photos needed: 8</div>
+        <button type="button" class="media-switch-link" id="switch-to-photos-btn">Switch to photos only instead</button>
+      </div>
+
+      <!-- Step 4b: Middle photos — shown once media choice is made -->
+      <div id="middle-photos-section" style="display:none">
+        <div class="media-divider"></div>
+        <div id="middle-photos-header" class="middle-photos-header">Add at least 8 photos · drag to reorder</div>
+        <div id="middle-photo-strip" class="thumbnail-strip"></div>
+        <button type="button" id="add-middle-photo-btn" class="btn-secondary">+ Add photos</button>
+        <input type="file" id="photo-file-input" accept="image/*" multiple hidden>
+        <div class="error-msg" id="photos-error"></div>
+        <button type="button" class="media-switch-link" id="switch-to-video-btn" style="display:none">Add video clips instead</button>
+      </div>
+
       <div id="storage-notice" class="storage-notice" style="display:none">
-        Photos aren't saved if you refresh — re-add them if needed.
+        Photos and videos aren't saved if you refresh — re-add them if needed.
       </div>
     </div>
 
@@ -764,6 +966,7 @@
   </form>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 <script>
 'use strict';
@@ -783,20 +986,24 @@ const CONFIG = {
   stripePublishableKey:  'pk_live_51Sek6v34CKOoUJtzxFbCwBoMoGWztjaWvlr4uKMszM2wMPflTdpVXPMiooKwf2Sk26EiNEL64l3L1XGXqDWWcGFC00qlHJgdCu',
   checkoutSessionUrl:    'https://us-central1-nca-toolkit-api-452723.cloudfunctions.net/createCheckoutSession',
 
-  // Limits
-  minPhotos:          10,
-  maxPhotos:          10,
+  // Video limits
+  maxVideoSeconds:       16,
+  videoSlotSeconds:      3,   // each 3s of video reduces middle photo minimum by 1
+
+  // Middle photo minimum (dynamic)
+  minMiddlePhotos:       2,   // floor — never goes below this
+  baseMiddlePhotos:      8,   // default when no video
 
   // Crop — must match FFmpeg video template exactly, do not round
-  cropWidth:          864,
-  cropHeight:         1115,
+  cropWidth:             864,
+  cropHeight:            1115,
 
   // Occasion — hardcoded v1, not surfaced in UI
-  occasion:           'birthday',
+  occasion:              'birthday',
 
   // Tone values sent in webhook payload
-  toneSweet:          25,
-  toneRoast:          75,
+  toneSweet:             25,
+  toneRoast:             75,
 
   // Genres — add entries here to add options in the UI
   // key:      sent verbatim in webhook payload (don't rename without updating Make)
@@ -826,8 +1033,15 @@ const CONFIG = {
 // ─────────────────────────────────────────────────────────────────────────────
 // State
 // ─────────────────────────────────────────────────────────────────────────────
+let photoIdCounter = 0;
+let videoIdCounter = 0;
+
 const state = {
-  photos:         [],    // [{ blob: Blob, thumbUrl: string }]
+  openerPhoto:    null,  // { blob, thumbUrl } | null
+  closerPhoto:    null,  // { blob, thumbUrl } | null
+  photos:         [],    // [{ id, blob, thumbUrl }] — middle photos, ordered
+  videos:         [],    // [{ id, blob, thumbUrl, filename, duration }]
+  mediaChoice:    null,  // 'photos' | 'video' | null
   selectedGenre:  null,  // genre key string
   tone:           null,  // 'sweet' | 'roast'
   activeAudio:    null,  // Audio currently playing
@@ -861,6 +1075,22 @@ function isValidEmail(v) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 }
 
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function calcMinMiddlePhotos() {
+  const totalSecs = getTotalVideoSeconds();
+  const reduction = Math.floor(totalSecs / CONFIG.videoSlotSeconds);
+  return Math.max(CONFIG.minMiddlePhotos, CONFIG.baseMiddlePhotos - reduction);
+}
+
+function getTotalVideoSeconds() {
+  return state.videos.reduce((sum, v) => sum + v.duration, 0);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // LocalStorage
 // ─────────────────────────────────────────────────────────────────────────────
@@ -868,15 +1098,16 @@ const STORAGE_KEY = 'instatoast_v1';
 
 function saveToStorage() {
   const data = {
-    senderName:    document.getElementById('sender-name').value,
-    senderEmail:   document.getElementById('sender-email').value,
-    recipientName: document.getElementById('recipient-name').value,
-    shoutoutWhat:  document.getElementById('shoutout-what').value,
-    shoutoutWhen:  document.getElementById('shoutout-when').value,
-    shoutoutResult:document.getElementById('shoutout-result').value,
-    tone:          state.tone,
-    genre:         state.selectedGenre,
+    senderName:      document.getElementById('sender-name').value,
+    senderEmail:     document.getElementById('sender-email').value,
+    recipientName:   document.getElementById('recipient-name').value,
+    shoutoutWhat:    document.getElementById('shoutout-what').value,
+    shoutoutWhen:    document.getElementById('shoutout-when').value,
+    shoutoutResult:  document.getElementById('shoutout-result').value,
+    tone:            state.tone,
+    genre:           state.selectedGenre,
     genreSuggestion: document.getElementById('genre-suggestion').value,
+    mediaChoice:     state.mediaChoice,
   };
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
 }
@@ -907,55 +1138,296 @@ function restoreFromStorage() {
     document.getElementById('genre-suggestion').style.display = 'block';
     document.getElementById('genre-suggest-trigger').style.display = 'none';
   }
+  if (data.mediaChoice) {
+    state.mediaChoice = data.mediaChoice;
+    document.querySelectorAll('.media-choice-btn').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.choice === data.mediaChoice);
+    });
+    // Sections stay hidden — opener/closer aren't persisted (photos can't survive refresh)
+  }
   updateSummary();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MediaSlot — photo queue (type: 'photo'; extensible to 'video')
+// Media section visibility
+// ─────────────────────────────────────────────────────────────────────────────
+function updateMediaSectionVisibility() {
+  const hasOpener = !!state.openerPhoto;
+  const hasCloser = !!state.closerPhoto;
+  const hasBoth   = hasOpener && hasCloser;
+
+  document.getElementById('closer-section').style.display       = hasOpener ? '' : 'none';
+  document.getElementById('media-choice-section').style.display = hasBoth ? '' : 'none';
+  document.getElementById('video-section').style.display        = (hasBoth && state.mediaChoice === 'video') ? '' : 'none';
+  document.getElementById('middle-photos-section').style.display= (hasBoth && state.mediaChoice) ? '' : 'none';
+
+  const swToPhotos = document.getElementById('switch-to-photos-btn');
+  const swToVideo  = document.getElementById('switch-to-video-btn');
+  if (swToPhotos) swToPhotos.style.display = state.mediaChoice === 'video'  ? '' : 'none';
+  if (swToVideo)  swToVideo.style.display  = state.mediaChoice === 'photos' ? '' : 'none';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Opener / closer slots
+// ─────────────────────────────────────────────────────────────────────────────
+function renderOpenerSlot() {
+  const slot = document.getElementById('opener-slot');
+  if (state.openerPhoto) {
+    slot.innerHTML = `
+      <div class="thumbnail">
+        <img src="${state.openerPhoto.thumbUrl}" alt="Opening photo">
+        <button type="button" class="thumbnail-remove" id="opener-remove-btn" aria-label="Remove opening photo">✕</button>
+      </div>`;
+    document.getElementById('opener-remove-btn').addEventListener('click', () => {
+      state.openerPhoto = null;
+      renderOpenerSlot();
+      updateMediaSectionVisibility();
+      updateSummary();
+      saveToStorage();
+    });
+  } else {
+    slot.innerHTML = '<button type="button" class="btn-secondary" id="opener-add-btn">+ Add opening photo</button>';
+    document.getElementById('opener-add-btn').addEventListener('click', () => {
+      openFilePickerFor('opener');
+    });
+  }
+  updateMediaSectionVisibility();
+}
+
+function renderCloserSlot() {
+  const slot = document.getElementById('closer-slot');
+  if (state.closerPhoto) {
+    slot.innerHTML = `
+      <div class="thumbnail">
+        <img src="${state.closerPhoto.thumbUrl}" alt="Closing photo">
+        <button type="button" class="thumbnail-remove" id="closer-remove-btn" aria-label="Remove closing photo">✕</button>
+      </div>`;
+    document.getElementById('closer-remove-btn').addEventListener('click', () => {
+      state.closerPhoto = null;
+      renderCloserSlot();
+      updateMediaSectionVisibility();
+      updateSummary();
+      saveToStorage();
+    });
+  } else {
+    slot.innerHTML = '<button type="button" class="btn-secondary" id="closer-add-btn">+ Add closing photo</button>';
+    document.getElementById('closer-add-btn').addEventListener('click', () => {
+      openFilePickerFor('closer');
+    });
+  }
+  updateMediaSectionVisibility();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Middle photos
+// ─────────────────────────────────────────────────────────────────────────────
+function renderMiddlePhotos() {
+  const strip = document.getElementById('middle-photo-strip');
+  if (!strip) return;
+  strip.innerHTML = '';
+  state.photos.forEach((photo, i) => {
+    const div = document.createElement('div');
+    div.className = 'thumbnail';
+    div.dataset.photoId = photo.id;
+    div.innerHTML = `
+      <img src="${photo.thumbUrl}" alt="Photo ${i + 1}">
+      <button type="button" class="thumbnail-remove" aria-label="Remove photo ${i + 1}">✕</button>`;
+    div.querySelector('.thumbnail-remove').addEventListener('click', () => {
+      state.photos.splice(i, 1);
+      renderMiddlePhotos();
+      updateMiddlePhotosHeader();
+      updateSummary();
+      saveToStorage();
+      if (state.photos.length === 0) document.getElementById('storage-notice').style.display = 'none';
+    });
+    strip.appendChild(div);
+  });
+}
+
+function updateMiddlePhotosHeader() {
+  const header = document.getElementById('middle-photos-header');
+  if (!header) return;
+  const min   = calcMinMiddlePhotos();
+  const count = state.photos.length;
+  if (count >= min) {
+    header.textContent = `✓ ${count} photo${count !== 1 ? 's' : ''} added — add more if you like`;
+    header.classList.add('met');
+  } else {
+    header.textContent = `Add at least ${min} photo${min !== 1 ? 's' : ''} · drag to reorder`;
+    header.classList.remove('met');
+  }
+}
+
+function enqueueMiddleFiles(files) {
+  const shortfall = calcMinMiddlePhotos() - state.photos.length;
+  // Cap at shortfall when below minimum; allow all if already at/above minimum
+  const toProcess = shortfall > 0 ? files.slice(0, shortfall) : files;
+  toProcess.forEach(f => MediaSlot.cropQueue.push(f));
+  MediaSlot.queueTotal = MediaSlot.cropQueue.length;
+  MediaSlot.processQueue();
+}
+
+function openFilePickerFor(target) {
+  MediaSlot.cropTarget = target;
+  const input = document.getElementById('photo-file-input');
+  if (target === 'middle') {
+    input.setAttribute('multiple', '');
+  } else {
+    input.removeAttribute('multiple');
+  }
+  input.click();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Video clips
+// ─────────────────────────────────────────────────────────────────────────────
+function extractVideoThumbnail(blob) {
+  return new Promise(resolve => {
+    const url   = URL.createObjectURL(blob);
+    const video = document.createElement('video');
+    video.muted      = true;
+    video.playsInline = true;
+    video.preload    = 'metadata';
+
+    let settled = false;
+    function settle(result) {
+      if (settled) return;
+      settled = true;
+      URL.revokeObjectURL(url);
+      resolve(result);
+    }
+
+    video.addEventListener('loadedmetadata', () => {
+      const duration = isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+      if (duration === 0) { settle({ thumbUrl: '', duration: 0 }); return; }
+      video.currentTime = Math.min(0.1, duration * 0.1);
+    });
+
+    video.addEventListener('seeked', () => {
+      const duration = isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+      const canvas   = document.createElement('canvas');
+      canvas.width   = 120;
+      canvas.height  = 68;
+      canvas.getContext('2d').drawImage(video, 0, 0, 120, 68);
+      const thumbUrl = canvas.toDataURL('image/jpeg', 0.7);
+      settle({ thumbUrl, duration });
+    });
+
+    video.addEventListener('error', () => settle({ thumbUrl: '', duration: 0 }));
+
+    // Timeout fallback in case seeked never fires
+    setTimeout(() => settle({ thumbUrl: '', duration: 0 }), 5000);
+
+    video.src = url;
+  });
+}
+
+async function addVideoClip(file) {
+  const { thumbUrl, duration } = await extractVideoThumbnail(file);
+
+  const total     = getTotalVideoSeconds();
+  const remaining = CONFIG.maxVideoSeconds - total;
+
+  if (duration <= 0) {
+    showVideoAddError("Couldn't read that clip's duration. Try a different file.");
+    return;
+  }
+
+  if (total + duration > CONFIG.maxVideoSeconds + 0.05) {
+    showVideoAddError(
+      `That clip would bring your total to ${(total + duration).toFixed(1)}s — you have ${remaining.toFixed(1)}s remaining. Try a shorter clip.`
+    );
+    return;
+  }
+
+  clearVideoAddError();
+  state.videos.push({ id: videoIdCounter++, blob: file, thumbUrl, filename: file.name, duration });
+  renderVideoClips();
+  updateVideoUI();
+  updateSummary();
+}
+
+function renderVideoClips() {
+  const list = document.getElementById('video-clips-list');
+  if (!list) return;
+  list.innerHTML = '';
+  state.videos.forEach((v, i) => {
+    const item = document.createElement('div');
+    item.className = 'video-clip-item';
+    const thumbHtml = v.thumbUrl
+      ? `<img src="${v.thumbUrl}" class="video-clip-thumb" alt="">`
+      : `<div class="video-clip-thumb video-clip-thumb--placeholder">🎬</div>`;
+    item.innerHTML = `
+      ${thumbHtml}
+      <div class="video-clip-info">
+        <div class="video-clip-name">${escapeHtml(v.filename)}</div>
+        <div class="video-clip-duration">~${v.duration.toFixed(1)}s</div>
+      </div>
+      <button type="button" class="video-clip-remove" aria-label="Remove clip">✕</button>`;
+    item.querySelector('.video-clip-remove').addEventListener('click', () => {
+      clearVideoAddError();
+      state.videos.splice(i, 1);
+      renderVideoClips();
+      updateVideoUI();
+      updateSummary();
+    });
+    list.appendChild(item);
+  });
+}
+
+function updateVideoUI() {
+  const total = getTotalVideoSeconds();
+  const pct   = Math.min(100, (total / CONFIG.maxVideoSeconds) * 100);
+  document.getElementById('video-scrubber-fill').style.width = `${pct}%`;
+  document.getElementById('video-total-label').textContent   = `${total.toFixed(1)}s`;
+  const min = calcMinMiddlePhotos();
+  document.getElementById('photos-needed-label').textContent = `Photos needed: ${min}`;
+  updateMiddlePhotosHeader();
+}
+
+function showVideoAddError(msg) {
+  const el = document.getElementById('video-add-error');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+function clearVideoAddError() {
+  const el = document.getElementById('video-add-error');
+  el.textContent = '';
+  el.classList.remove('visible');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Media choice
+// ─────────────────────────────────────────────────────────────────────────────
+function setMediaChoice(choice) {
+  if (choice === 'photos' && state.mediaChoice === 'video' && state.videos.length > 0) {
+    if (!confirm('Switching to photos only will remove your video clips. Continue?')) return;
+    state.videos = [];
+    renderVideoClips();
+    updateVideoUI();
+  }
+  state.mediaChoice = choice;
+  document.querySelectorAll('.media-choice-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.choice === choice);
+  });
+  clearError('media-choice-error');
+  updateMediaSectionVisibility();
+  updateMiddlePhotosHeader();
+  updateSummary();
+  saveToStorage();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MediaSlot — crop engine (type: 'photo'; extensible to 'video')
 // ─────────────────────────────────────────────────────────────────────────────
 const MediaSlot = {
-  type:              'photo',
-  cropper:           null,
-  pendingObjectUrl:  null,
-
-  cropQueue: [],
-  queueTotal: 0,
-
-  init() {
-    // Browse link inside drop zone + "Add more" button both open the picker
-    document.getElementById('add-photo-btn').addEventListener('click', e => { e.stopPropagation(); this.openFilePicker(); });
-    document.getElementById('add-more-btn').addEventListener('click', () => this.openFilePicker());
-
-    // Click anywhere on the drop zone also opens picker
-    const dropZone = document.getElementById('drop-zone');
-    dropZone.addEventListener('click', () => this.openFilePicker());
-    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-    dropZone.addEventListener('drop', e => {
-      e.preventDefault();
-      dropZone.classList.remove('drag-over');
-      this.enqueueFiles(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')));
-    });
-
-    document.getElementById('photo-file-input').addEventListener('change', e => {
-      this.enqueueFiles(Array.from(e.target.files));
-      e.target.value = ''; // reset so the same file can be re-picked
-    });
-    document.getElementById('crop-confirm-btn').addEventListener('click', () => this.confirmCrop());
-    document.getElementById('crop-cancel-btn').addEventListener('click', () => this.closeCropModal());
-  },
-
-  enqueueFiles(files) {
-    const slots = CONFIG.maxPhotos - state.photos.length;
-    files.slice(0, slots).forEach(f => this.cropQueue.push(f));
-    this.queueTotal = this.cropQueue.length;
-    this.processQueue();
-  },
-
-  openFilePicker() {
-    if (state.photos.length >= CONFIG.maxPhotos) return;
-    document.getElementById('photo-file-input').click();
-  },
+  type:             'photo',
+  cropTarget:       'middle',  // 'opener' | 'closer' | 'middle'
+  cropper:          null,
+  pendingObjectUrl: null,
+  cropQueue:        [],
+  queueTotal:       0,
 
   processQueue() {
     if (this.cropQueue.length === 0) return;
@@ -989,7 +1461,7 @@ const MediaSlot = {
     img.src = this.pendingObjectUrl;
 
     const position = this.queueTotal - this.cropQueue.length;
-    const title = this.queueTotal > 1 ? `Crop photo ${position} of ${this.queueTotal}` : 'Crop photo';
+    const title    = this.queueTotal > 1 ? `Crop photo ${position} of ${this.queueTotal}` : 'Crop photo';
     document.querySelector('#crop-modal .modal-header h3').textContent = title;
 
     document.getElementById('crop-modal').classList.remove('hidden');
@@ -1000,16 +1472,16 @@ const MediaSlot = {
     img.onload = () => {
       if (this.cropper) { this.cropper.destroy(); this.cropper = null; }
       this.cropper = new Cropper(img, {
-        aspectRatio:        CONFIG.cropWidth / CONFIG.cropHeight,
-        viewMode:           1,
-        dragMode:           'move',
-        autoCropArea:       1,
-        restore:            false,
-        guides:             false,
-        center:             false,
-        highlight:          false,
-        cropBoxMovable:     false,
-        cropBoxResizable:   false,
+        aspectRatio:              CONFIG.cropWidth / CONFIG.cropHeight,
+        viewMode:                 1,
+        dragMode:                 'move',
+        autoCropArea:             1,
+        restore:                  false,
+        guides:                   false,
+        center:                   false,
+        highlight:                false,
+        cropBoxMovable:           false,
+        cropBoxResizable:         false,
         toggleDragModeOnDblclick: false,
         ready() {
           document.getElementById('crop-container').classList.remove('hidden');
@@ -1022,23 +1494,37 @@ const MediaSlot = {
   confirmCrop() {
     if (!this.cropper) return;
     const canvas = this.cropper.getCroppedCanvas({
-      width:                  CONFIG.cropWidth,
-      height:                 CONFIG.cropHeight,
-      imageSmoothingEnabled:  true,
-      imageSmoothingQuality:  'high',
+      width:                 CONFIG.cropWidth,
+      height:                CONFIG.cropHeight,
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: 'high',
     });
     canvas.toBlob(blob => {
       const thumbUrl = canvas.toDataURL('image/jpeg', 0.8);
-      state.photos.push({ blob, thumbUrl });
-      this.closeCropModal();
-      this.appendThumbnail(state.photos.length - 1);
-      updateAddPhotoBtn();
-      clearError('photos-error');
+
+      if (this.cropTarget === 'opener') {
+        state.openerPhoto = { blob, thumbUrl };
+        this.closeCropModal();
+        renderOpenerSlot();
+        clearError('opener-error');
+      } else if (this.cropTarget === 'closer') {
+        state.closerPhoto = { blob, thumbUrl };
+        this.closeCropModal();
+        renderCloserSlot();
+        clearError('closer-error');
+      } else {
+        // middle photo
+        state.photos.push({ id: photoIdCounter++, blob, thumbUrl });
+        this.closeCropModal();
+        renderMiddlePhotos();
+        updateMiddlePhotosHeader();
+        clearError('photos-error');
+        if (state.photos.length === 1) {
+          document.getElementById('storage-notice').style.display = 'block';
+        }
+      }
       updateSummary();
       saveToStorage();
-      if (state.photos.length === 1) {
-        document.getElementById('storage-notice').style.display = 'block';
-      }
     }, 'image/jpeg', 0.92);
   },
 
@@ -1048,69 +1534,14 @@ const MediaSlot = {
     if (this.cropper) { this.cropper.destroy(); this.cropper = null; }
     if (this.pendingObjectUrl) { URL.revokeObjectURL(this.pendingObjectUrl); this.pendingObjectUrl = null; }
     document.getElementById('crop-image').src = '';
-    if (state.photos.length < CONFIG.maxPhotos && this.cropQueue.length > 0) {
+    if (this.cropQueue.length > 0) {
       this.processQueue();
     } else {
       this.cropQueue = [];
       this.queueTotal = 0;
     }
   },
-
-  appendThumbnail(i) {
-    const strip = document.getElementById('thumbnail-strip');
-    const photo = state.photos[i];
-    const div = document.createElement('div');
-    div.className = 'thumbnail';
-    div.innerHTML = `
-      <img src="${photo.thumbUrl}" alt="Photo ${i + 1}">
-      <button type="button" class="thumbnail-remove" aria-label="Remove photo ${i + 1}">✕</button>
-    `;
-    div.querySelector('.thumbnail-remove').addEventListener('click', () => this.removePhoto(i));
-    strip.appendChild(div);
-  },
-
-  renderThumbnails() {
-    const strip = document.getElementById('thumbnail-strip');
-    strip.innerHTML = '';
-    state.photos.forEach((photo, i) => {
-      const div = document.createElement('div');
-      div.className = 'thumbnail';
-      div.innerHTML = `
-        <img src="${photo.thumbUrl}" alt="Photo ${i + 1}">
-        <button type="button" class="thumbnail-remove" aria-label="Remove photo ${i + 1}">✕</button>
-      `;
-      div.querySelector('.thumbnail-remove').addEventListener('click', () => this.removePhoto(i));
-      strip.appendChild(div);
-    });
-  },
-
-  removePhoto(index) {
-    state.photos.splice(index, 1);
-    this.renderThumbnails();
-    updateAddPhotoBtn();
-    updateSummary();
-    saveToStorage();
-    if (state.photos.length === 0) document.getElementById('storage-notice').style.display = 'none';
-  },
 };
-
-function updateAddPhotoBtn() {
-  const count    = state.photos.length;
-  const dropZone = document.getElementById('drop-zone');
-  const strip    = document.getElementById('thumbnail-strip');
-  const addMore  = document.getElementById('add-more-btn');
-
-  if (count === 0) {
-    dropZone.style.display = '';
-    strip.style.display    = 'none';
-    addMore.style.display  = 'none';
-  } else {
-    dropZone.style.display = 'none';
-    strip.style.display    = '';
-    addMore.style.display  = count >= CONFIG.maxPhotos ? 'none' : '';
-    addMore.textContent    = `+ Add more (${count}/${CONFIG.maxPhotos})`;
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tone buttons
@@ -1159,10 +1590,8 @@ function renderGenres() {
         ${hasAudio
           ? `<div class="genre-preview-wrap"><button type="button" class="genre-play-btn" data-audio="${genre.audioUrl}" aria-label="Preview ${genre.name}">▶</button><span class="genre-preview-label">Preview style</span></div>`
           : `<span class="genre-preview-soon">preview<br>coming soon</span>`}
-      </div>
-    `;
+      </div>`;
 
-    // Select on row click (but not on play button)
     item.addEventListener('click', e => {
       if (e.target.closest('.genre-play-btn')) return;
       selectGenre(genre.key);
@@ -1195,7 +1624,6 @@ function selectGenre(key) {
 }
 
 function toggleAudioPreview(btn, audioUrl) {
-  // Stop anything currently playing
   if (state.activeAudio && !state.activeAudio.paused) {
     state.activeAudio.pause();
     state.activeAudio.currentTime = 0;
@@ -1203,7 +1631,6 @@ function toggleAudioPreview(btn, audioUrl) {
       state.activePlayBtn.classList.remove('playing');
       state.activePlayBtn.textContent = '▶';
     }
-    // If clicking the same button, just stop
     if (state.activePlayBtn === btn) {
       state.activeAudio = null;
       state.activePlayBtn = null;
@@ -1232,7 +1659,7 @@ function buildShoutout() {
   const what   = document.getElementById('shoutout-what').value.trim();
   const when   = document.getElementById('shoutout-when').value.trim();
   const result = document.getElementById('shoutout-result').value.trim();
-  const parts = [];
+  const parts  = [];
   if (name || what) {
     let opening = '';
     if (name && what) opening = `${name} always ${what}`;
@@ -1250,10 +1677,9 @@ function updateShoutoutPreview() {
   const when   = document.getElementById('shoutout-when').value.trim();
   const result = document.getElementById('shoutout-result').value.trim();
   const preview = document.querySelector('.shoutout-preview');
-  const text    = buildShoutout();
   if (what || when || result) {
     preview.style.display = '';
-    document.getElementById('shoutout-preview-text').textContent = text;
+    document.getElementById('shoutout-preview-text').textContent = buildShoutout();
   } else {
     preview.style.display = 'none';
   }
@@ -1275,19 +1701,35 @@ function updateSummary() {
   const genreName  = state.selectedGenre
     ? (CONFIG.genres.find(g => g.key === state.selectedGenre)?.name ?? state.selectedGenre)
     : '';
-  const photoCount = state.photos.length;
   const what   = document.getElementById('shoutout-what').value.trim();
   const when   = document.getElementById('shoutout-when').value.trim();
   const result = document.getElementById('shoutout-result').value.trim();
   const storyFilled = what && when && result;
   const story  = storyFilled ? buildShoutout() : '';
 
+  // Media summary
+  const minMiddle   = calcMinMiddlePhotos();
+  const hasOpener   = !!state.openerPhoto;
+  const hasCloser   = !!state.closerPhoto;
+  const middleCount = state.photos.length;
+  const videoCount  = state.videos.length;
+  const mediaReady  = hasOpener && hasCloser && !!state.mediaChoice && middleCount >= minMiddle;
+
+  const mediaParts = [];
+  if (hasOpener) mediaParts.push('1 opening');
+  mediaParts.push(`${middleCount} photo${middleCount !== 1 ? 's' : ''}`);
+  if (state.mediaChoice === 'video' && videoCount > 0) {
+    mediaParts.push(`${videoCount} video clip${videoCount !== 1 ? 's' : ''}`);
+  }
+  if (hasCloser) mediaParts.push('1 closing');
+  const mediaSummary = (hasOpener || hasCloser || middleCount > 0) ? mediaParts.join(' · ') : '';
+
   document.getElementById('summary').innerHTML =
-    summaryRow('To',          toVal,                           !!toVal) +
-    summaryRow('Tone',        tone,                            !!tone) +
-    summaryRow('Genre',       genreName,                       !!genreName) +
-    summaryRow('Photos',      `${photoCount}/${CONFIG.minPhotos} photos`, photoCount >= CONFIG.minPhotos) +
-    summaryRow('Their story', story,                           storyFilled);
+    summaryRow('To',          toVal,         !!toVal) +
+    summaryRow('Tone',        tone,          !!tone) +
+    summaryRow('Genre',       genreName,     !!genreName) +
+    summaryRow('Media',       mediaSummary,  mediaReady) +
+    summaryRow('Their story', story,         storyFilled);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1313,13 +1755,13 @@ function clearError(id) {
 
 function validateField(id) {
   const val = document.getElementById(id)?.value.trim() ?? '';
-  if (id === 'sender-name')    { if (!val) { showError('sender-name-error',       'Your name is required.');                          return false; } }
-  if (id === 'sender-email')   { if (!val) { showError('sender-email-error',      'Your email is required.');                         return false; }
+  if (id === 'sender-name')    { if (!val) { showError('sender-name-error',       'Your name is required.');                                                    return false; } }
+  if (id === 'sender-email')   { if (!val) { showError('sender-email-error',      'Your email is required.');                                                   return false; }
                                   if (!isValidEmail(val)) { showError('sender-email-error', 'Enter a valid email address (e.g. you@example.com).'); return false; } }
-  if (id === 'recipient-name') { if (!val) { showError('recipient-name-error',    'Their name is required.');                         return false; } }
-  if (id === 'shoutout-what')  { if (!val) { showError('shoutout-what-error',     'Tell us what they do.');                           return false; } }
-  if (id === 'shoutout-when')  { if (!val) { showError('shoutout-when-error',     'Tell us when or where.');                          return false; } }
-  if (id === 'shoutout-result'){ if (!val) { showError('shoutout-result-error',   'Tell us what happens.');                           return false; } }
+  if (id === 'recipient-name') { if (!val) { showError('recipient-name-error',    'Their name is required.');                                                    return false; } }
+  if (id === 'shoutout-what')  { if (!val) { showError('shoutout-what-error',     'Tell us what they do.');                                                      return false; } }
+  if (id === 'shoutout-when')  { if (!val) { showError('shoutout-when-error',     'Tell us when or where.');                                                     return false; } }
+  if (id === 'shoutout-result'){ if (!val) { showError('shoutout-result-error',   'Tell us what happens.');                                                      return false; } }
   clearError(`${id}-error`);
   return true;
 }
@@ -1329,8 +1771,20 @@ function validateAll() {
   ['sender-name', 'sender-email', 'recipient-name'].forEach(id => { if (!validateField(id)) ok = false; });
   if (!state.tone) { showError('tone-error', 'Please choose a tone.'); ok = false; } else clearError('tone-error');
   ['shoutout-what', 'shoutout-when', 'shoutout-result'].forEach(id => { if (!validateField(id)) ok = false; });
-  const need = CONFIG.minPhotos - state.photos.length;
-  if (need > 0) { showError('photos-error', `Add ${need} more photo${need === 1 ? '' : 's'} to continue (${CONFIG.minPhotos} required).`); ok = false; } else clearError('photos-error');
+
+  // Media
+  if (!state.openerPhoto) { showError('opener-error', 'Please add an opening photo.'); ok = false; } else clearError('opener-error');
+  if (!state.closerPhoto) { showError('closer-error', 'Please add a closing photo.');  ok = false; } else clearError('closer-error');
+  if (!state.mediaChoice) { showError('media-choice-error', 'Please choose photos only or photos + video.'); ok = false; } else clearError('media-choice-error');
+  const minPhotos = calcMinMiddlePhotos();
+  const need      = minPhotos - state.photos.length;
+  if (need > 0) {
+    showError('photos-error', `Please add at least ${need} more photo${need === 1 ? '' : 's'}.`);
+    ok = false;
+  } else {
+    clearError('photos-error');
+  }
+
   if (!state.selectedGenre) { showError('genre-error', 'Select a song style.'); ok = false; } else clearError('genre-error');
   if (!document.getElementById('consent').checked) { showError('consent-error', 'You must agree to the Terms of Service.'); ok = false; } else clearError('consent-error');
   return ok;
@@ -1345,19 +1799,36 @@ function setProgress(done, total, statusText) {
   document.getElementById('progress-status').textContent = statusText;
 }
 
-// Returns { uploadUrl, publicUrl } for a single photo slot.
+// Returns { uploadUrl, publicUrl } for a single media slot.
 // When useSignedUrls is true, asks the Cloud Function for a signed PUT URL.
 // When false, constructs the public GCS URL directly (bucket must allow allUsers objectCreator).
-async function resolveUploadTarget(orderId, photoIndex) {
-  const filename  = `photo_${String(photoIndex).padStart(2, '0')}.jpg`;
+async function resolveUploadTarget(orderId, mediaType, index) {
+  let filename, contentType;
+
+  if (mediaType === 'opener') {
+    filename    = 'opener.jpg';
+    contentType = 'image/jpeg';
+  } else if (mediaType === 'closer') {
+    filename    = 'closer.jpg';
+    contentType = 'image/jpeg';
+  } else if (mediaType === 'photo') {
+    filename    = `photo_${String(index).padStart(2, '0')}.jpg`;
+    contentType = 'image/jpeg';
+  } else if (mediaType === 'video') {
+    filename    = `video_${String(index).padStart(2, '0')}.mp4`;
+    contentType = 'video/mp4';
+  }
+
   const gcsPath   = `${CONFIG.gcpFolder}/${orderId}/media_inputs/${filename}`;
   const publicUrl = `https://storage.googleapis.com/${CONFIG.gcpBucket}/${gcsPath}`;
 
   if (CONFIG.useSignedUrls) {
+    const body = { orderId, mediaType, contentType };
+    if (index != null) body.index = index;
     const res = await fetch(CONFIG.signedUrlEndpoint, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ orderId, photoIndex, contentType: 'image/jpeg' }),
+      body:    JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`Signed URL request failed (${res.status})`);
     const { signedUrl } = await res.json();
@@ -1365,26 +1836,59 @@ async function resolveUploadTarget(orderId, photoIndex) {
   }
 
   // Direct public PUT — temporary, for testing only
-  const uploadUrl = `https://storage.googleapis.com/${CONFIG.gcpBucket}/${gcsPath}`;
-  return { uploadUrl, publicUrl };
+  return { uploadUrl: `https://storage.googleapis.com/${CONFIG.gcpBucket}/${gcsPath}`, publicUrl };
 }
 
-async function uploadAllPhotos(orderId) {
-  const urls  = [];
-  const total = state.photos.length;
-  for (let i = 0; i < total; i++) {
-    setProgress(i, total, `Photo ${i + 1} of ${total}…`);
-    const { uploadUrl, publicUrl } = await resolveUploadTarget(orderId, i + 1);
+async function uploadAllMedia(orderId) {
+  const totalItems = 2 + state.photos.length + state.videos.length;
+  let done = 0;
+
+  // 1. Upload opener
+  setProgress(done, totalItems, 'Uploading opening photo…');
+  const { uploadUrl: openerUrl, publicUrl: openerPublicUrl } = await resolveUploadTarget(orderId, 'opener', null);
+  const openerRes = await fetch(openerUrl, {
+    method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, body: state.openerPhoto.blob,
+  });
+  if (!openerRes.ok) throw new Error(`Opening photo upload failed (${openerRes.status})`);
+  done++;
+
+  // 2. Upload closer
+  setProgress(done, totalItems, 'Uploading closing photo…');
+  const { uploadUrl: closerUrl, publicUrl: closerPublicUrl } = await resolveUploadTarget(orderId, 'closer', null);
+  const closerRes = await fetch(closerUrl, {
+    method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, body: state.closerPhoto.blob,
+  });
+  if (!closerRes.ok) throw new Error(`Closing photo upload failed (${closerRes.status})`);
+  done++;
+
+  // 3. Upload middle photos in order
+  const photoUrls = [];
+  for (let i = 0; i < state.photos.length; i++) {
+    setProgress(done, totalItems, `Photo ${i + 1} of ${state.photos.length}…`);
+    const { uploadUrl, publicUrl } = await resolveUploadTarget(orderId, 'photo', i + 1);
     const res = await fetch(uploadUrl, {
-      method:  'PUT',
-      headers: { 'Content-Type': 'image/jpeg' },
-      body:    state.photos[i].blob,
+      method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, body: state.photos[i].blob,
     });
     if (!res.ok) throw new Error(`Photo ${i + 1} upload failed (${res.status})`);
-    urls.push(publicUrl);
+    photoUrls.push(publicUrl);
+    done++;
   }
-  setProgress(total, total, 'Sending your order…');
-  return urls;
+
+  // 4. Upload video clips in order
+  const videoUrls = [];
+  for (let i = 0; i < state.videos.length; i++) {
+    setProgress(done, totalItems, `Video ${i + 1} of ${state.videos.length}…`);
+    const { uploadUrl, publicUrl } = await resolveUploadTarget(orderId, 'video', i + 1);
+    const res = await fetch(uploadUrl, {
+      method: 'PUT', headers: { 'Content-Type': 'video/mp4' }, body: state.videos[i].blob,
+    });
+    if (!res.ok) throw new Error(`Video ${i + 1} upload failed (${res.status})`);
+    videoUrls.push(publicUrl);
+    done++;
+  }
+
+  setProgress(totalItems, totalItems, 'Sending your order…');
+  return { openerPhotoUrl: openerPublicUrl, closerPhotoUrl: closerPublicUrl, photoUrls, videoUrls };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1438,25 +1942,30 @@ async function handleSubmit(e) {
   document.body.style.overflow = 'hidden';
 
   try {
-    const photoUrls = await uploadAllPhotos(orderId);
+    const { openerPhotoUrl, closerPhotoUrl, photoUrls, videoUrls } = await uploadAllMedia(orderId);
 
     const payload = {
-      order_id:       orderId,
-      sender_name:    document.getElementById('sender-name').value.trim(),
-      sender_email:   document.getElementById('sender-email').value.trim(),
-      recipient_name: document.getElementById('recipient-name').value.trim(),
-      occasion:       CONFIG.occasion,
-      shoutout_action: document.getElementById('shoutout-what').value.trim(),
-      shoutout_when:   document.getElementById('shoutout-when').value.trim(),
-      shoutout_result: document.getElementById('shoutout-result').value.trim(),
-      shoutout_full:   buildShoutout(),
-      tone:            state.tone,
-      genre:          state.selectedGenre,
-      genre_suggestion: document.getElementById('genre-suggestion').value.trim() || null,
-      photo_urls:     photoUrls,
-      photo_count:    photoUrls.length,
-      consent:        document.getElementById('consent').checked,
-      submitted_at:   new Date().toISOString(),
+      order_id:            orderId,
+      sender_name:         document.getElementById('sender-name').value.trim(),
+      sender_email:        document.getElementById('sender-email').value.trim(),
+      recipient_name:      document.getElementById('recipient-name').value.trim(),
+      occasion:            CONFIG.occasion,
+      shoutout_action:     document.getElementById('shoutout-what').value.trim(),
+      shoutout_when:       document.getElementById('shoutout-when').value.trim(),
+      shoutout_result:     document.getElementById('shoutout-result').value.trim(),
+      shoutout_full:       buildShoutout(),
+      tone:                state.tone,
+      genre:               state.selectedGenre,
+      genre_suggestion:    document.getElementById('genre-suggestion').value.trim() || null,
+      opener_photo_url:    openerPhotoUrl,
+      closer_photo_url:    closerPhotoUrl,
+      photo_urls:          photoUrls,
+      photo_count:         photoUrls.length,
+      video_urls:          videoUrls,
+      video_count:         videoUrls.length,
+      total_video_seconds: parseFloat(getTotalVideoSeconds().toFixed(2)),
+      consent:             document.getElementById('consent').checked,
+      submitted_at:        new Date().toISOString(),
     };
 
     const webhookRes = await fetch(CONFIG.webhookUrl, {
@@ -1493,15 +2002,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderGenres();
   initToneButtons();
-  MediaSlot.init();
+
+  // Render bookend slots (starts with "Add" buttons)
+  renderOpenerSlot();
+  renderCloserSlot();
+
+  // Crop modal buttons
+  document.getElementById('crop-confirm-btn').addEventListener('click', () => MediaSlot.confirmCrop());
+  document.getElementById('crop-cancel-btn').addEventListener('click',  () => MediaSlot.closeCropModal());
+
+  // Photo file input — used for opener, closer, and middle photos
+  document.getElementById('photo-file-input').addEventListener('change', e => {
+    const files = Array.from(e.target.files);
+    e.target.value = '';
+    if (files.length === 0) return;
+    if (MediaSlot.cropTarget === 'opener' || MediaSlot.cropTarget === 'closer') {
+      MediaSlot.cropQueue  = [files[0]];
+      MediaSlot.queueTotal = 1;
+      MediaSlot.processQueue();
+    } else {
+      enqueueMiddleFiles(files);
+    }
+  });
+
+  // Middle photos — add button
+  document.getElementById('add-middle-photo-btn').addEventListener('click', () => openFilePickerFor('middle'));
+
+  // Media choice buttons
+  document.querySelectorAll('.media-choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => setMediaChoice(btn.dataset.choice));
+  });
+
+  // Video add
+  document.getElementById('add-video-btn').addEventListener('click', () => {
+    document.getElementById('video-file-input').click();
+  });
+  document.getElementById('video-file-input').addEventListener('change', async e => {
+    const files = Array.from(e.target.files);
+    e.target.value = '';
+    for (const file of files) {
+      await addVideoClip(file);
+    }
+  });
+
+  // Switch links
+  document.getElementById('switch-to-photos-btn').addEventListener('click', () => setMediaChoice('photos'));
+  document.getElementById('switch-to-video-btn').addEventListener('click',  () => setMediaChoice('video'));
+
+  // SortableJS — drag to reorder middle photos
+  Sortable.create(document.getElementById('middle-photo-strip'), {
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    onEnd() {
+      const strip    = document.getElementById('middle-photo-strip');
+      const newOrder = [];
+      strip.querySelectorAll('[data-photo-id]').forEach(el => {
+        const id    = parseInt(el.dataset.photoId, 10);
+        const photo = state.photos.find(p => p.id === id);
+        if (photo) newOrder.push(photo);
+      });
+      state.photos = newOrder;
+      renderMiddlePhotos();
+    },
+  });
+
   updateSummary();
   restoreFromStorage();
 
   // Text input listeners
   ['sender-name', 'sender-email', 'recipient-name'].forEach(id => {
     const el = document.getElementById(id);
-    el.addEventListener('input',  () => { if (id === 'recipient-name') updateShoutoutPreview(); saveToStorage(); updateSummary(); });
-    el.addEventListener('blur',   () => validateField(id));
+    el.addEventListener('input', () => { if (id === 'recipient-name') updateShoutoutPreview(); saveToStorage(); updateSummary(); });
+    el.addEventListener('blur',  () => validateField(id));
   });
 
   ['shoutout-what', 'shoutout-when', 'shoutout-result'].forEach(id => {
@@ -1516,9 +2088,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('genre-suggest-trigger').addEventListener('click', () => {
-    const input = document.getElementById('genre-suggestion');
+    const input   = document.getElementById('genre-suggestion');
     const trigger = document.getElementById('genre-suggest-trigger');
-    input.style.display = 'block';
+    input.style.display   = 'block';
     trigger.style.display = 'none';
     input.focus();
   });

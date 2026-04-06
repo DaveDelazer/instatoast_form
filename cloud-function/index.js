@@ -7,6 +7,9 @@ const storage = new Storage();
 const BUCKET = 'instatoast-videos';
 const SIGNED_URL_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
+const VALID_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const VALID_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
+
 exports.getSignedUploadUrl = async (req, res) => {
   // CORS — tighten origin to your form URL in production
   res.set('Access-Control-Allow-Origin', 'https://order.instatoast.com');
@@ -23,10 +26,10 @@ exports.getSignedUploadUrl = async (req, res) => {
     return;
   }
 
-  const { orderId, photoIndex, contentType } = req.body || {};
+  const { orderId, mediaType, index, contentType } = req.body || {};
 
-  if (!orderId || photoIndex == null || !contentType) {
-    res.status(400).json({ error: 'Missing required fields: orderId, photoIndex, contentType' });
+  if (!orderId || !mediaType || !contentType) {
+    res.status(400).json({ error: 'Missing required fields: orderId, mediaType, contentType' });
     return;
   }
 
@@ -36,18 +39,51 @@ exports.getSignedUploadUrl = async (req, res) => {
     return;
   }
 
-  const index = Number(photoIndex);
-  if (!Number.isInteger(index) || index < 1 || index > 10) {
-    res.status(400).json({ error: 'photoIndex must be an integer 1–10' });
+  let filename;
+
+  if (mediaType === 'opener') {
+    if (!VALID_IMAGE_TYPES.includes(contentType)) {
+      res.status(400).json({ error: 'Invalid contentType for opener' });
+      return;
+    }
+    filename = 'opener.jpg';
+
+  } else if (mediaType === 'closer') {
+    if (!VALID_IMAGE_TYPES.includes(contentType)) {
+      res.status(400).json({ error: 'Invalid contentType for closer' });
+      return;
+    }
+    filename = 'closer.jpg';
+
+  } else if (mediaType === 'photo') {
+    if (!VALID_IMAGE_TYPES.includes(contentType)) {
+      res.status(400).json({ error: 'Invalid contentType for photo' });
+      return;
+    }
+    const idx = Number(index);
+    if (!Number.isInteger(idx) || idx < 1 || idx > 50) {
+      res.status(400).json({ error: 'index must be an integer 1–50 for photo' });
+      return;
+    }
+    filename = `photo_${String(idx).padStart(2, '0')}.jpg`;
+
+  } else if (mediaType === 'video') {
+    if (!VALID_VIDEO_TYPES.includes(contentType)) {
+      res.status(400).json({ error: 'Invalid contentType for video' });
+      return;
+    }
+    const idx = Number(index);
+    if (!Number.isInteger(idx) || idx < 1 || idx > 20) {
+      res.status(400).json({ error: 'index must be an integer 1–20 for video' });
+      return;
+    }
+    filename = `video_${String(idx).padStart(2, '0')}.mp4`;
+
+  } else {
+    res.status(400).json({ error: 'Invalid mediaType — must be opener, closer, photo, or video' });
     return;
   }
 
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(contentType)) {
-    res.status(400).json({ error: 'Invalid contentType' });
-    return;
-  }
-
-  const filename = `photo_${String(index).padStart(2, '0')}.jpg`;
   const gcsPath = `instatoast/orders/${orderId}/media_inputs/${filename}`;
 
   try {
@@ -104,7 +140,6 @@ exports.createCheckoutSession = async (req, res) => {
       client_reference_id:        orderId,
       return_url:                 `${process.env.RETURN_URL}?order_complete=true&session_id={CHECKOUT_SESSION_ID}`,
       allow_promotion_codes:      true,
-      automatic_payment_methods:  { enabled: true },
     };
     if (customerEmail) sessionParams.customer_email = customerEmail;
 

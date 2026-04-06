@@ -205,3 +205,97 @@ Also confirmed (no code change needed): payload already includes `shoutout_actio
 - [ ] Verify Country and Pop Punk audio preview files are in GCS (`hb_country.mp3`, `hb_pop_punk.mp3`)
 - [ ] Add dancing toast animation to the order complete screen (`showOrderComplete()` in `index.html`)
 - [ ] Clean up Stripe checkout appearance/payment method ordering in Dashboard
+
+---
+
+## Session 5 — 2026-04-06
+
+### What changed
+
+**Replaced the flat 10-photo section with a structured media input system.** All other form sections (shoutout, tone, genre, About you, Review, Stripe checkout) are unchanged.
+
+#### `index.html` — Photos & video section (full replacement)
+
+**New form flow (progressive reveal):**
+1. **Opening photo** — always visible; single photo slot, straight into crop modal on add
+2. **Closing photo** — appears once opener is set; same single slot UI
+3. **Media choice** — appears once both bookends are set; "📷 Photos only" / "🎬 Photos + video" toggle
+4. **Video clips** — appears if "Photos + video" chosen; clip list, total scrubber (Xs / 16s), "Photos needed: X" label (updates live), "Switch to photos only instead" escape hatch
+5. **Middle photos** — appears once media choice is made; drag-to-reorder strip (SortableJS), "Add at least X photos" header that goes green when minimum is met, "Add video clips instead" escape hatch
+
+**CONFIG changes:**
+- Removed `minPhotos: 10`, `maxPhotos: 10`
+- Added `maxVideoSeconds: 16`, `videoSlotSeconds: 3`, `minMiddlePhotos: 2`, `baseMiddlePhotos: 8`
+
+**State changes:**
+- Added `openerPhoto`, `closerPhoto`, `videos`, `mediaChoice`
+- `photos` now holds `{ id, blob, thumbUrl }` with stable `id` for SortableJS reorder
+
+**New functions:**
+- `calcMinMiddlePhotos()` — `Math.max(2, 8 - Math.floor(totalVideoSeconds / 3))`
+- `getTotalVideoSeconds()` — sum of `state.videos[].duration`
+- `extractVideoThumbnail(blob)` — loads into hidden `<video>`, seeks to 0.1s, draws to canvas; timeout fallback at 5s
+- `addVideoClip(file)` — reads duration, enforces 16s cap, shows inline error if exceeded
+- `renderVideoClips()`, `updateVideoUI()` — live scrubber and photo-needed label
+- `renderOpenerSlot()`, `renderCloserSlot()` — single-slot render with add/remove buttons
+- `renderMiddlePhotos()`, `updateMiddlePhotosHeader()` — middle photo strip
+- `setMediaChoice(choice)` — with confirm() guard when switching video→photos with clips
+- `updateMediaSectionVisibility()` — drives all progressive reveal
+- `enqueueMiddleFiles(files)` — caps queue at shortfall when below minimum
+- `openFilePickerFor(target)` — sets `cropTarget` and toggles `multiple` attribute
+
+**MediaSlot changes:**
+- Added `cropTarget: 'middle'` — `'opener' | 'closer' | 'middle'`
+- `confirmCrop()` routes result to opener, closer, or middle photos based on `cropTarget`
+- `closeCropModal()` no longer gated on `maxPhotos` (removed)
+- Removed: `init()`, `openFilePicker()`, `enqueueFiles()`, `appendThumbnail()`, `renderThumbnails()`, `removePhoto()` — replaced by standalone functions
+
+**Payload additions** (existing fields preserved):
+```
+opener_photo_url, closer_photo_url, video_urls, video_count, total_video_seconds
+```
+
+**Upload flow** (`uploadAllMedia`):
+1. Opener → `media_inputs/opener.jpg`
+2. Closer → `media_inputs/closer.jpg`
+3. Middle photos → `media_inputs/photo_01.jpg` … in drag order
+4. Video clips → `media_inputs/video_01.mp4` … (content-type `video/mp4` regardless of original format)
+
+**Other changes:**
+- SortableJS 1.15.2 CDN added before CropperJS script at bottom of `<body>`
+- Progress overlay title changed from "Uploading photos…" to "Uploading your media…"
+- Storage notice updated to "Photos and videos aren't saved if you refresh…"
+- `mediaChoice` added to localStorage persistence
+- Summary "Photos" row replaced with "Media" row: `1 opening · X photos · Y video clips · 1 closing`
+- Section `<h2>` changed from "Photos" to "Photos & video"
+- `escapeHtml()` helper added for safe clip filename rendering
+
+#### `cloud-function/index.js` — `getSignedUploadUrl` rewrite
+
+- Request body changed from `{ orderId, photoIndex, contentType }` to `{ orderId, mediaType, index, contentType }`
+- `mediaType` values: `'opener'` | `'closer'` | `'photo'` | `'video'`
+- `opener` / `closer`: no `index` required; generates `opener.jpg` / `closer.jpg`
+- `photo`: index 1–50; generates `photo_XX.jpg`
+- `video`: index 1–20; accepts `video/mp4`, `video/quicktime`, `video/webm`; generates `video_XX.mp4`
+- `createCheckoutSession` unchanged
+
+### GCP changes
+
+None in this session — Cloud Function source updated but not yet deployed.
+
+### Current state
+
+- `index.html` updated with new media input system — not yet pushed to GitHub
+- `cloud-function/index.js` updated — not yet deployed (breaking change to `getSignedUploadUrl` API; must deploy before pushing `index.html` live)
+- All other form sections unchanged; Stripe checkout, Make webhook, DNS all still working once deployed
+
+### Pending
+
+- [ ] Deploy updated `getSignedUploadUrl` Cloud Function to GCP before pushing `index.html` to GitHub Pages
+- [ ] End-to-end test: opener + closer + middle photos + optional video → webhook → embedded checkout
+- [ ] Mobile testing (drag-to-reorder, video thumbnail extraction, file pickers)
+- [ ] Tighten GCS CORS `origin` from `*` to `https://order.instatoast.com`
+- [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
+- [ ] Verify Country and Pop Punk audio preview files are in GCS (`hb_country.mp3`, `hb_pop_punk.mp3`)
+- [ ] Add dancing toast animation to the order complete screen (`showOrderComplete()` in `index.html`)
+- [ ] Clean up Stripe checkout appearance/payment method ordering in Dashboard
