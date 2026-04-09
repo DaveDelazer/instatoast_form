@@ -208,6 +208,132 @@ Also confirmed (no code change needed): payload already includes `shoutout_actio
 
 ---
 
+## Session 6 — 2026-04-09
+
+### What changed
+
+**Three connected changes:** video trim+crop modal (Part 1), background uploads (Part 2), unified media tray (Parts 3 & 4). Both `index.html` and `cloud-function/index.js` modified. Cloud Function not yet redeployed — see Pending below.
+
+---
+
+#### `cloud-function/index.js`
+
+- **Photo index limit**: 1–50 → 1–99 (shared counter with videos)
+- **Video index limit**: 1–20 → 1–99 (shared counter with photos)
+- **Video filename extension** *(breaking change)*: was always `video_XX.mp4`; now determined by `contentType`:
+  - `video/webm` → `video_XX.webm` (primary path — encoded clips)
+  - `video/quicktime` → `video_XX.mov` (iOS raw fallback)
+  - `video/mp4` → `video_XX.mp4` (fallback)
+- `video/webm` was already accepted as a valid `contentType`; now it generates a `.webm` filename
+- `opener` and `closer` media types retained for backwards compat but are no longer called from the frontend
+
+---
+
+#### `index.html` — State shape change
+
+**Old state:** `openerPhoto`, `closerPhoto`, `photos[]`, `videos[]`, `mediaChoice`, `photoIdCounter`, `videoIdCounter`
+
+**New state:**
+- `state.media[]` — flat ordered array; role is positional (first = opener, last = closer, middle = everything in between)
+- `state.orderId` — generated on first media confirm (was: generated at submit time)
+- `state.uploadCounter` — shared counter for filenames; increments on each upload
+- `mediaIdCounter` — module-level, increments for each new tray item
+
+Each media item: `{ id, type, blob, thumbUrl, duration, publicUrl, status, uploadIndex, abortController, rawFallback? }`
+
+`status` values: `'encoding' | 'uploading' | 'uploaded' | 'failed'`
+
+---
+
+#### `index.html` — Functions removed
+
+`renderOpenerSlot`, `renderCloserSlot`, `setMediaChoice`, `updateMediaSectionVisibility`, `renderMiddlePhotos`, `updateMiddlePhotosHeader`, `enqueueMiddleFiles`, `openFilePickerFor`, `addVideoClip`, `renderVideoClips`, `updateVideoUI`, `showVideoAddError`, `clearVideoAddError`, `uploadAllMedia`
+
+---
+
+#### `index.html` — Functions added
+
+`renderMediaTray`, `addMediaToTray`, `removeMediaFromTray`, `updateMediaStatusLine`, `updateVideoScrubber`, `updateTrayWarning`, `updateSubmitButtonState`, `enqueueUpload`, `processUploadQueue`, `doUpload`, `retryUpload`, `processNextMediaItem`, `VideoTrim` module (see below)
+
+---
+
+#### `index.html` — VideoTrim module (new)
+
+Video trim+crop modal:
+- Pan/drag and pinch/scroll-to-zoom crop frame (864×1115 aspect ratio, `min(100%, 45vh × 864/1115)` width)
+- Dual-thumb custom trim slider with in/out time labels and remaining-seconds counter
+- Play/pause preview within crop frame; thin playhead bar tracks full-video position
+- `MediaRecorder` encodes cropped+trimmed result to WebM at exactly 864×1115, ~2.5 Mbps, via `canvas.captureStream(30)`
+- Uses `requestVideoFrameCallback` if available (Safari 15.4+), falls back to `requestAnimationFrame`
+- Encode progress shown in modal ("Processing… X%"); controls locked during encode; cancel discards
+- **iOS fallback**: if `MediaRecorder` or `canvas.captureStream` unsupported, uploads raw file with `rawFallback: true`
+
+---
+
+#### `index.html` — MediaSlot changes
+
+- `cropTarget` field removed — all confirmed crops go into the unified tray
+- `confirmCrop()` now creates a photo item and calls `addMediaToTray()` + `enqueueUpload()` instead of routing to opener/closer/middle
+- `closeCropModal()` calls `processNextMediaItem()` to continue mixed photo+video queues
+
+---
+
+#### `index.html` — HTML changes
+
+**Removed from Photos & video section:** opener slot, closer section, media choice toggle, video clips section, middle photos section, all switch links
+
+**Added:** `#video-modal` (trim+crop modal); `#media-tray` (unified SortableJS strip); `#add-media-btn` + `#media-file-input` (single picker, `accept="image/*,video/*" multiple`); `#media-status-line`; `#video-scrubber-wrap`; `#tray-warning`
+
+---
+
+#### `index.html` — CONFIG additions
+
+- `maxUploadConcurrency: 2`
+
+---
+
+#### `index.html` — Submit flow
+
+- `orderId` generated on first upload, not at submit time
+- `uploadAllMedia()` deleted; uploads happen in the background after each crop/trim confirm
+- Submit validates that all `state.media[].status === 'uploaded'`; shows "X items uploading…" hint near submit button while pending
+- Progress overlay now used only for webhook POST + Stripe session creation
+- Payload built from `state.media[]` positions
+
+---
+
+#### `index.html` — SortableJS
+
+`onMove` callback prevents video items from being dragged to position 0 (opener) or last (closer). `onEnd` rebuilds `state.media` in new order and re-renders labels.
+
+---
+
+### GCP changes
+
+None in this session.
+
+### Current state
+
+- `index.html` updated — **not yet pushed to GitHub**
+- `cloud-function/index.js` updated — **not yet deployed** *(breaking change: video filenames `.mp4` → `.webm`; must deploy CF before pushing index.html live or video uploads will 400)*
+- All other functionality (Stripe checkout, Make webhook, DNS, genre audio) unchanged
+
+### Pending
+
+- [ ] Deploy updated `getSignedUploadUrl` Cloud Function **before** pushing `index.html` live
+- [ ] Push `index.html` to GitHub Pages after CF is deployed
+- [ ] End-to-end test: add opener photo → middle photos + video clip → submit → Stripe checkout
+- [ ] Test video trim+crop modal: pan/zoom, trim slider, encode, iOS Safari fallback
+- [ ] Test SortableJS drag with videos: confirm videos can't reach opener/closer slots
+- [ ] Test background upload status rings: pulsing → green, failed → red → retry
+- [ ] Mobile testing (iPhone Safari, Android Chrome)
+- [ ] Tighten GCS CORS `origin` from `*` to `https://order.instatoast.com`
+- [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
+- [ ] Verify Country and Pop Punk audio preview files in GCS
+- [ ] Add dancing toast animation to order complete screen
+
+---
+
 ## Session 5 — 2026-04-06
 
 ### What changed

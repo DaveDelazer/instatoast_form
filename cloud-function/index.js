@@ -61,8 +61,8 @@ exports.getSignedUploadUrl = async (req, res) => {
       return;
     }
     const idx = Number(index);
-    if (!Number.isInteger(idx) || idx < 1 || idx > 50) {
-      res.status(400).json({ error: 'index must be an integer 1–50 for photo' });
+    if (!Number.isInteger(idx) || idx < 1 || idx > 99) {
+      res.status(400).json({ error: 'index must be an integer 1–99 for photo' });
       return;
     }
     filename = `photo_${String(idx).padStart(2, '0')}.jpg`;
@@ -73,11 +73,15 @@ exports.getSignedUploadUrl = async (req, res) => {
       return;
     }
     const idx = Number(index);
-    if (!Number.isInteger(idx) || idx < 1 || idx > 20) {
-      res.status(400).json({ error: 'index must be an integer 1–20 for video' });
+    if (!Number.isInteger(idx) || idx < 1 || idx > 99) {
+      res.status(400).json({ error: 'index must be an integer 1–99 for video' });
       return;
     }
-    filename = `video_${String(idx).padStart(2, '0')}.mp4`;
+    // Extension determined by content type; webm is the primary encoded format
+    const ext = contentType === 'video/webm' ? 'webm'
+               : contentType === 'video/quicktime' ? 'mov'
+               : 'mp4';
+    filename = `video_${String(idx).padStart(2, '0')}.${ext}`;
 
   } else {
     res.status(400).json({ error: 'Invalid mediaType — must be opener, closer, photo, or video' });
