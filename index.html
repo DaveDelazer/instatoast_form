@@ -494,6 +494,7 @@
       flex-shrink: 0;
       touch-action: none;
       transform: translateZ(0);
+      clip-path: inset(0 round 4px);
       border: 1.5px solid rgba(255,255,255,0.25);
       border-radius: 4px;
     }
@@ -594,27 +595,6 @@
       margin-top: 4px;
       min-height: 16px;
     }
-
-    /* Encoding progress bar inside modal */
-    .video-encode-progress {
-      display: none;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 20px;
-      font-size: 13px;
-      color: var(--muted);
-      flex-shrink: 0;
-    }
-    .encode-spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      flex-shrink: 0;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── Progress overlay ────────────────────────────────────────────────── */
     .progress-overlay {
@@ -868,6 +848,19 @@
       flex-shrink: 0;
     }
 
+    /* Upload percentage overlay */
+    .upload-pct {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(0,0,0,0.5);
+      padding: 1px 0;
+      pointer-events: none;
+    }
+
     /* SortableJS drag ghost */
     .sortable-ghost { opacity: 0.35; }
   </style>
@@ -957,12 +950,6 @@
         <span id="trim-out-label">0.0s</span>
       </div>
       <div id="trim-duration-info" class="trim-duration-info"></div>
-    </div>
-
-    <!-- Encoding progress (shown during MediaRecorder encode) -->
-    <div id="video-encode-progress" class="video-encode-progress">
-      <div class="encode-spinner"></div>
-      <span id="encode-progress-text">Processing…</span>
     </div>
 
     <div class="modal-footer">
@@ -1200,9 +1187,9 @@ const CONFIG = {
 let mediaIdCounter = 0;
 
 const state = {
-  openerPhoto:   null,  // { id, blob, thumbUrl, publicUrl, status, uploadIndex, abortController, role:'opener' }
+  openerPhoto:   null,  // { id, blob, thumbUrl, publicUrl, status, uploadIndex, uploadPct, _xhr, role:'opener' }
   closerPhoto:   null,  // same shape, role:'closer'
-  media:         [],    // middle items only — { id, type, blob, thumbUrl, duration, publicUrl, status, uploadIndex, abortController, role:'middle', trimMeta? }
+  media:         [],    // middle items only — { id, type, blob, thumbUrl, duration, publicUrl, status, uploadIndex, uploadPct, _xhr, role:'middle', trimMeta? }
   orderId:       null,
   uploadCounter: 0,
   selectedGenre: null,
@@ -1365,7 +1352,7 @@ function renderBookendSlot(which) {
 function removeBookendPhoto(which) {
   const photo = which === 'opener' ? state.openerPhoto : state.closerPhoto;
   if (!photo) return;
-  if (photo.abortController) photo.abortController.abort();
+  if (photo._xhr) photo._xhr.abort();
   const qi = uploadQueue.indexOf(photo);
   if (qi !== -1) uploadQueue.splice(qi, 1);
 
@@ -1461,7 +1448,7 @@ function addMediaToTray(item) {
 function removeMediaFromTray(index) {
   const item = state.media[index];
   if (!item) return;
-  if (item.abortController) item.abortController.abort();
+  if (item._xhr) item._xhr.abort();
   const qi = uploadQueue.indexOf(item);
   if (qi !== -1) uploadQueue.splice(qi, 1);
 
@@ -1523,6 +1510,32 @@ function updateSubmitButtonState() {
   }
 }
 
+function renderUploadProgress() {
+  // Update percentage overlays on uploading thumbnails (tray + bookends)
+  document.querySelectorAll('.upload-pct').forEach(el => el.remove());
+
+  const addPct = (container, item) => {
+    if (!container || !item || item.status !== 'uploading' || item.uploadPct == null) return;
+    let el = container.querySelector('.upload-pct');
+    if (!el) {
+      el = document.createElement('span');
+      el.className = 'upload-pct';
+      container.appendChild(el);
+    }
+    el.textContent = item.uploadPct + '%';
+  };
+
+  if (state.openerPhoto) addPct(document.getElementById('opener-thumb'), state.openerPhoto);
+  if (state.closerPhoto) addPct(document.getElementById('closer-thumb'), state.closerPhoto);
+  document.querySelectorAll('.tray-item[data-id]').forEach(el => {
+    const id   = parseInt(el.dataset.id, 10);
+    const item = state.media.find(m => m.id === id);
+    if (item) addPct(el.querySelector('.thumbnail'), item);
+  });
+
+  updateSubmitButtonState();
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Upload queue — background uploads with concurrency limit
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1571,18 +1584,31 @@ async function doUpload(item) {
       state.orderId, mediaType, item.uploadIndex, contentType
     );
 
-    item.abortController = new AbortController();
-    const res = await fetch(uploadUrl, {
-      method:  'PUT',
-      headers: { 'Content-Type': contentType },
-      body:    item.blob,
-      signal:  item.abortController.signal,
-    });
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      item._xhr = xhr;
 
-    if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+      xhr.upload.addEventListener('progress', e => {
+        if (e.lengthComputable) {
+          item.uploadPct = Math.round((e.loaded / e.total) * 100);
+          renderUploadProgress();
+        }
+      });
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`Upload failed (${xhr.status})`));
+      });
+      xhr.addEventListener('error', () => reject(new Error('Upload network error')));
+      xhr.addEventListener('abort', () => reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })));
+
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Content-Type', contentType);
+      xhr.send(item.blob);
+    });
 
     item.publicUrl = publicUrl;
     item.status    = 'uploaded';
+    item.uploadPct = 100;
 
   } catch (err) {
     if (err.name === 'AbortError') return;
@@ -1807,7 +1833,6 @@ const VideoTrim = {
     this.panY     = 0;
     this.playing  = false;
 
-    document.getElementById('video-encode-progress').style.display = 'none';
     document.getElementById('video-confirm-btn').disabled = true;
     document.getElementById('video-play-overlay').style.display = '';
 
