@@ -425,3 +425,67 @@ None in this session — Cloud Function source updated but not yet deployed.
 - [ ] Verify Country and Pop Punk audio preview files are in GCS (`hb_country.mp3`, `hb_pop_punk.mp3`)
 - [ ] Add dancing toast animation to the order complete screen (`showOrderComplete()` in `index.html`)
 - [ ] Clean up Stripe checkout appearance/payment method ordering in Dashboard
+
+---
+
+## Session 7 — 2026-04-12
+
+### What changed
+
+**Unified media tray — merged opener/closer back into single drag-to-reorder tray.**
+
+#### `index.html` — HTML
+
+- Removed separate bookend row (opener/closer photo slots) and their dedicated file inputs
+- Removed `middle-section` conditional wrapper — tray is always visible
+- Single `#media-tray` + `#add-media-btn` + `#media-file-input` for all media
+- Added `#media-requirements` counter element below add button
+- Video scrubber label updated from `16s` to `18s`
+
+#### `index.html` — CSS
+
+- Removed all `.bookend-*` styles
+- Added `.tray-position-label` — shows "opener" / "closer" below first and last tray items
+- Added `.tray-video-warning` — red "must be photo" warning when video at first/last
+- Added `.media-requirements` with `.req-met` / `.req-unmet` classes
+
+#### `index.html` — CONFIG
+
+- `maxVideoSeconds`: 16 → 18
+- `minMiddlePhotos` / `baseMiddlePhotos` → `minPhotos: 4` / `basePhotos: 10` (total including opener/closer)
+
+#### `index.html` — State
+
+- Removed `state.openerPhoto` and `state.closerPhoto`
+- `state.media[]` is the single source of truth — position 0 = opener, last = closer
+
+#### `index.html` — Functions removed
+
+`renderBookendSlot`, `removeBookendPhoto`, `updateMiddleSectionVisibility`
+
+#### `index.html` — Functions added
+
+`updateRequirementsCounter()` — live counter: "Add X more photos" / "Photos: ✓" + video seconds remaining
+
+#### `index.html` — Key function changes
+
+- `calcMinMiddlePhotos()` → `calcMinPhotos()` (base 10, floor 4, -1 per 3s video)
+- `renderMediaTray()` — position labels + video-at-bookend warning
+- `doUpload()` / `resolveUploadTarget()` — removed opener/closer mediaType
+- `validateAll()` — first/last must be photos, total photos ≥ calcMinPhotos()
+- `handleSubmit()` — derives opener/closer from position; adds `media_order` array
+- Init block — removed opener/closer file input listeners
+
+### Current state
+
+- `index.html` updated — not yet pushed
+- Cloud Function unchanged (still needs deployment from Session 6)
+
+### Pending
+
+- [ ] Deploy updated `getSignedUploadUrl` Cloud Function before pushing `index.html` live
+- [ ] Push `index.html` to GitHub Pages after CF is deployed
+- [ ] End-to-end test: photos + videos → reorder → verify warnings → submit
+- [ ] Mobile testing (unified tray, drag-to-reorder)
+- [ ] Tighten GCS CORS origin
+- [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
