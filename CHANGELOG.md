@@ -489,3 +489,85 @@ None in this session — Cloud Function source updated but not yet deployed.
 - [ ] Mobile testing (unified tray, drag-to-reorder)
 - [ ] Tighten GCS CORS origin
 - [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
+
+---
+
+## Session 8 — 2026-04-13
+
+### What changed
+
+**Dynamic photo/video budget interaction** — photos and video now share a budget that adjusts in real time as users add media.
+
+#### `index.html` — New function
+
+`calcMaxVideoSeconds()` — `max(0, maxVideoSeconds(18) - max(0, photoCount - minPhotos(4)) * videoSlotSeconds(3))`. Each photo beyond 4 reduces available video by 3s.
+
+#### `index.html` — Updated functions
+
+- `updateRequirementsCounter()` — shows dynamic photo count, dynamic video budget, and a warning element (`#media-over-warning`) when:
+  - Video exceeds dynamic limit: "⚠ Xs over video limit — remove video or N photos"
+  - Photos reduce video (informational, only when video exists): "⚠ N extra photos reduce video by Xs"
+- `updateVideoScrubber()` — scrubber max is now dynamic (`calcMaxVideoSeconds()`); fill bar turns red when over limit; label shows dynamic max
+- `validateAll()` — new check: blocks submit when `totalVideoSeconds > calcMaxVideoSeconds()`
+- `updateSummary()` — `mediaReady` now requires video within dynamic limit
+- `VideoTrim.openModal()` — initial trim out-point capped to dynamic max, not static `CONFIG.maxVideoSeconds`
+
+#### `index.html` — HTML
+
+- Added `#media-over-warning` div below `#media-requirements`
+- Removed `#video-total-label` and `#video-max-label` spans from scrubber (label now set entirely via innerHTML)
+
+### Video upload investigation
+
+Frontend video upload code is correct — `doUpload()` correctly resolves signed URLs for `mediaType: 'video'`, uploads the raw file, and stores `publicUrl`. The payload at submit correctly maps `middleVideos` to `video_urls`. **Most likely cause of video upload failures: the `getSignedUploadUrl` Cloud Function has not been redeployed since the API format changed in Session 5.** The deployed CF still expects `{ orderId, photoIndex, contentType }` but the frontend sends `{ orderId, mediaType, index, contentType }`. Photos may work if the CF was partially updated, but video `mediaType` would be rejected. **Fix: redeploy `getSignedUploadUrl` from `cloud-function/index.js`.**
+
+### Current state
+
+- `index.html` updated — not yet pushed
+- Cloud Function unchanged — **must be deployed before video uploads will work**
+
+### Pending
+
+- [ ] **Deploy `getSignedUploadUrl` Cloud Function** — required for video uploads to work
+- [ ] Push `index.html` to GitHub Pages after CF is deployed
+- [ ] End-to-end test: photos + videos with dynamic budget warnings
+- [ ] Mobile testing
+- [ ] Tighten GCS CORS origin
+- [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
+
+---
+
+## Session 9 — 2026-04-13
+
+### What changed
+
+#### `index.html` — payload fixes
+
+- `video_metadata` entries now include `container_w` and `container_h` — required for the Make.com pipeline to reconstruct FFmpeg crop coordinates correctly (pan values are in display pixels relative to the crop frame, which is responsive and varies by screen size)
+- `media_order` changed from a flat URL array to `[{ url, type }]` objects — Make.com code block can now iterate in sequence and branch on `type: "photo"` vs `type: "video"` without cross-referencing other arrays
+
+#### `index.html` — VideoTrim bug fixes
+
+- `VideoTrim._initTrimSlider` `onMove`: out-point cap was using `CONFIG.maxVideoSeconds` (static 18s) instead of `calcMaxVideoSeconds()` (dynamic based on photo count) — trim slider out-thumb now correctly respects photo-based video budget
+- `VideoTrim.updateDurationInfo`: "Xs remaining" label had same static vs dynamic bug — now shows correct remaining budget
+
+#### `index.html` — video budget gate at file picker
+
+- Videos are now blocked at the file-picker stage when `calcMaxVideoSeconds() - getTotalVideoSeconds() <= 0`; shows "no video budget left — remove existing videos or photos to make room" instead of silently opening the trim modal and forcing a 1-second clip
+
+#### `index.html` — CONFIG
+
+- `maxMediaItems`: 50 → 22 (theoretical max is 18 × 1s clips + 4 floor photos = 22)
+
+### Current state
+
+- `index.html` pushed to GitHub Pages
+- Cloud Function unchanged — still needs deployment before video uploads will work
+
+### Pending
+
+- [ ] **Deploy `getSignedUploadUrl` Cloud Function** — required for video uploads to work
+- [ ] End-to-end test: photos + videos with dynamic budget warnings
+- [ ] Mobile testing
+- [ ] Tighten GCS CORS origin
+- [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket

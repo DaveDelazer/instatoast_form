@@ -1016,6 +1016,7 @@
 
       <!-- Requirements counter -->
       <div id="media-requirements" class="media-requirements"></div>
+      <div id="media-over-warning" class="media-requirements" style="display:none"></div>
 
       <!-- Status / scrubber / error / notice -->
       <div id="media-status-line" class="media-status-line"></div>
@@ -1023,7 +1024,7 @@
         <div class="video-scrubber-track">
           <div id="video-scrubber-fill" class="video-scrubber-fill"></div>
         </div>
-        <span class="video-scrubber-label"><span id="video-total-label">0.0s</span> / 18s video</span>
+        <span class="video-scrubber-label">0.0s / 18s video</span>
       </div>
       <div class="error-msg" id="media-error"></div>
       <div class="storage-notice" style="display:none" id="storage-notice">
@@ -1103,7 +1104,7 @@ const CONFIG = {
   maxUploadConcurrency:  2,
 
   // Max media items (must not exceed cloud function index limit of 99)
-  maxMediaItems:         50,
+  maxMediaItems:         22,
 
   // Crop — must match FFmpeg video template exactly
   cropWidth:             864,
@@ -1197,6 +1198,13 @@ function calcMinPhotos() {
   const totalSecs = getTotalVideoSeconds();
   const reduction = Math.floor(totalSecs / CONFIG.videoSlotSeconds);
   return Math.max(CONFIG.minPhotos, CONFIG.basePhotos - reduction);
+}
+
+function calcMaxVideoSeconds() {
+  // Each photo beyond the floor (minPhotos) reduces available video by videoSlotSeconds
+  const photoCount = state.media.filter(m => m.type === 'photo').length;
+  const excess     = Math.max(0, photoCount - CONFIG.minPhotos);
+  return Math.max(0, CONFIG.maxVideoSeconds - excess * CONFIG.videoSlotSeconds);
 }
 
 function getTotalVideoSeconds() {
@@ -1385,24 +1393,45 @@ function updateRequirementsCounter() {
   const photoCount   = state.media.filter(m => m.type === 'photo').length;
   const totalSecs    = getTotalVideoSeconds();
   const minPhotos    = calcMinPhotos();
+  const maxVideo     = calcMaxVideoSeconds();
   const photosNeeded = Math.max(0, minPhotos - photoCount);
-  const videoLeft    = Math.max(0, CONFIG.maxVideoSeconds - totalSecs);
+  const videoLeft    = Math.max(0, maxVideo - totalSecs);
+  const videoOver    = Math.max(0, totalSecs - maxVideo);
+  const photosOver   = Math.max(0, photoCount - CONFIG.minPhotos);
 
   const parts = [];
 
+  // Photo status
   if (photosNeeded > 0) {
     parts.push(`<span class="req-unmet">Add ${photosNeeded} more photo${photosNeeded !== 1 ? 's' : ''}</span>`);
   } else {
-    parts.push(`<span class="req-met">Photos: ✓</span>`);
+    parts.push(`<span class="req-met">Photos: ${photoCount} / ${minPhotos}+ ✓</span>`);
   }
 
-  if (videoLeft > 0) {
+  // Video status — show dynamic max
+  if (maxVideo <= 0) {
+    parts.push(`<span class="req-unmet">No video room (too many photos)</span>`);
+  } else if (videoLeft > 0) {
     parts.push(`<span class="${totalSecs > 0 ? 'req-met' : ''}">${videoLeft.toFixed(0)}s video available</span>`);
   } else {
     parts.push(`<span class="req-met">Video: max reached</span>`);
   }
 
   el.innerHTML = parts.join(' · ');
+
+  // Warnings when over limits
+  const warnEl = document.getElementById('media-over-warning');
+  if (videoOver > 0) {
+    warnEl.innerHTML = `<span class="req-unmet">⚠ ${videoOver.toFixed(1)}s over video limit — remove video or ${Math.ceil(videoOver / CONFIG.videoSlotSeconds)} photo${Math.ceil(videoOver / CONFIG.videoSlotSeconds) !== 1 ? 's' : ''}</span>`;
+    warnEl.style.display = '';
+  } else if (photosOver > 0 && totalSecs > 0) {
+    // Only warn about excess photos reducing video when there IS video
+    const videoReduction = photosOver * CONFIG.videoSlotSeconds;
+    warnEl.innerHTML = `<span class="req-unmet">⚠ ${photosOver} extra photo${photosOver !== 1 ? 's' : ''} reduce${photosOver === 1 ? 's' : ''} video by ${videoReduction}s</span>`;
+    warnEl.style.display = '';
+  } else {
+    warnEl.style.display = 'none';
+  }
 }
 
 function updateVideoScrubber() {
@@ -1413,9 +1442,16 @@ function updateVideoScrubber() {
   if (!hasVideo) { wrap.style.display = 'none'; return; }
 
   wrap.style.display = '';
-  const pct = Math.min(100, (totalSecs / CONFIG.maxVideoSeconds) * 100);
-  document.getElementById('video-scrubber-fill').style.width = `${pct}%`;
-  document.getElementById('video-total-label').textContent   = totalSecs.toFixed(1) + 's';
+  const maxVideo = calcMaxVideoSeconds();
+  const cap      = Math.max(maxVideo, totalSecs); // avoid div-by-zero and show overflow
+  const pct      = cap > 0 ? Math.min(100, (totalSecs / cap) * 100) : 0;
+  const fill     = document.getElementById('video-scrubber-fill');
+  fill.style.width = `${pct}%`;
+  fill.style.background = totalSecs > maxVideo ? 'var(--error)' : 'var(--accent)';
+
+  // Update label to show dynamic max
+  const label = document.querySelector('.video-scrubber-label');
+  label.innerHTML = `${totalSecs.toFixed(1)}s / ${maxVideo.toFixed(0)}s video`;
 }
 
 function updateSubmitButtonState() {
@@ -1746,12 +1782,13 @@ const VideoTrim = {
         this.containerH / this.videoH
       );
 
-      // Initial trim: full clip up to remaining cap
+      // Initial trim: full clip up to remaining dynamic cap
       const alreadyUsed = getTotalVideoSeconds();
+      const maxAvailable = calcMaxVideoSeconds();
       this.inPoint  = 0;
       this.outPoint = Math.min(
         this.videoEl.duration,
-        Math.max(1, CONFIG.maxVideoSeconds - alreadyUsed)
+        Math.max(1, maxAvailable - alreadyUsed)
       );
 
       this.videoEl.currentTime = this.inPoint;
@@ -1920,7 +1957,7 @@ const VideoTrim = {
       e.preventDefault();
       const dur  = this.videoEl.duration;
       const time = getPct(e) * dur;
-      const maxOut = Math.min(dur, CONFIG.maxVideoSeconds - getTotalVideoSeconds() + (this.outPoint - this.inPoint));
+      const maxOut = Math.min(dur, calcMaxVideoSeconds() - getTotalVideoSeconds() + (this.outPoint - this.inPoint));
 
       if (dragging === 'in') {
         this.inPoint = Math.max(0, Math.min(time, this.outPoint - 1));
@@ -1962,7 +1999,7 @@ const VideoTrim = {
   updateDurationInfo() {
     const selected  = Math.max(0, this.outPoint - this.inPoint);
     const alreadyIn = getTotalVideoSeconds();
-    const remaining = Math.max(0, CONFIG.maxVideoSeconds - alreadyIn - selected);
+    const remaining = Math.max(0, calcMaxVideoSeconds() - alreadyIn - selected);
     document.getElementById('trim-duration-info').textContent =
       `${selected.toFixed(1)}s selected · ${remaining.toFixed(1)}s remaining`;
   },
@@ -2328,8 +2365,10 @@ function updateSummary() {
   const first       = state.media[0];
   const last        = state.media.length > 1 ? state.media[state.media.length - 1] : null;
   const bookendOk   = first && first.type === 'photo' && last && last.type === 'photo';
+  const maxVideo    = calcMaxVideoSeconds();
   const mediaReady  = bookendOk
     && photoCount >= minPhotos
+    && totalSecs <= maxVideo + 0.1
     && state.media.every(m => m.status === 'uploaded');
 
   const mediaParts = [];
@@ -2388,10 +2427,12 @@ function validateAll() {
   ['shoutout-what', 'shoutout-when', 'shoutout-result'].forEach(id => { if (!validateField(id)) ok = false; });
 
   // Media validation — unified tray
-  const photoCount = state.media.filter(m => m.type === 'photo').length;
-  const minPhotos  = calcMinPhotos();
-  const first      = state.media[0];
-  const last       = state.media.length > 1 ? state.media[state.media.length - 1] : null;
+  const photoCount  = state.media.filter(m => m.type === 'photo').length;
+  const minPhotos   = calcMinPhotos();
+  const totalSecs   = getTotalVideoSeconds();
+  const maxVideo    = calcMaxVideoSeconds();
+  const first       = state.media[0];
+  const last        = state.media.length > 1 ? state.media[state.media.length - 1] : null;
 
   if (state.media.length < 2) {
     showError('media-error', 'Add at least 2 items — first and last must be photos.');
@@ -2405,6 +2446,10 @@ function validateAll() {
   } else if (photoCount < minPhotos) {
     const need = minPhotos - photoCount;
     showError('media-error', `Add ${need} more photo${need !== 1 ? 's' : ''}.`);
+    ok = false;
+  } else if (totalSecs > maxVideo + 0.1) {
+    const over = (totalSecs - maxVideo).toFixed(1);
+    showError('media-error', `${over}s over video limit — remove video or photos to continue.`);
     ok = false;
   } else if (state.media.some(m => m.status === 'uploading')) {
     showError('media-error', 'Please wait for all uploads to finish before submitting.');
@@ -2514,16 +2559,18 @@ async function handleSubmit(e) {
       video_urls:          middleVideos.map(m => m.publicUrl),
       video_count:         middleVideos.length,
       video_metadata:      middleVideos.map(m => m.trimMeta ? {
-        url:        m.publicUrl,
-        in_point:   m.trimMeta.inPoint,
-        out_point:  m.trimMeta.outPoint,
-        crop_scale: m.trimMeta.cropScale,
-        crop_pan_x: m.trimMeta.cropPanX,
-        crop_pan_y: m.trimMeta.cropPanY,
-        video_w:    m.trimMeta.videoW,
-        video_h:    m.trimMeta.videoH,
+        url:          m.publicUrl,
+        in_point:     m.trimMeta.inPoint,
+        out_point:    m.trimMeta.outPoint,
+        crop_scale:   m.trimMeta.cropScale,
+        crop_pan_x:   m.trimMeta.cropPanX,
+        crop_pan_y:   m.trimMeta.cropPanY,
+        video_w:      m.trimMeta.videoW,
+        video_h:      m.trimMeta.videoH,
+        container_w:  m.trimMeta.containerW,
+        container_h:  m.trimMeta.containerH,
       } : null).filter(Boolean),
-      media_order:         state.media.map(m => m.publicUrl),
+      media_order:         state.media.map(m => ({ url: m.publicUrl, type: m.type })),
       total_video_seconds: parseFloat(getTotalVideoSeconds().toFixed(2)),
       consent:             document.getElementById('consent').checked,
       submitted_at:        new Date().toISOString(),
@@ -2590,15 +2637,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const accepted = files.slice(0, slotsLeft);
+    const videoRoomLeft = Math.max(0, calcMaxVideoSeconds() - getTotalVideoSeconds());
+    let blockedVideos = 0;
     for (const f of accepted) {
       if (f.type.startsWith('image/')) {
         MediaSlot.cropQueue.push(f);
       } else if (f.type.startsWith('video/')) {
-        VideoTrim.videoQueue.push(f);
+        if (videoRoomLeft <= 0) {
+          blockedVideos++;
+        } else {
+          VideoTrim.videoQueue.push(f);
+        }
       }
     }
     if (accepted.length < files.length) {
       showError('media-error', `Only ${accepted.length} of ${files.length} files added — ${CONFIG.maxMediaItems} item limit reached.`);
+    } else if (blockedVideos > 0) {
+      showError('media-error', `Video${blockedVideos > 1 ? 's' : ''} not added — no video budget left. Remove existing videos or photos to make room.`);
     }
     MediaSlot.queueTotal = MediaSlot.cropQueue.length;
     VideoTrim.queueTotal = VideoTrim.videoQueue.length;
