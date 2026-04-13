@@ -315,6 +315,7 @@
     .summary-label { color: var(--muted); flex-shrink: 0; }
     .summary-value { font-weight: 500; text-align: right; color: var(--text); }
     .summary-tick { color: #22c55e; font-size: 13px; margin-left: 6px; flex-shrink: 0; }
+    .summary-warning { color: var(--accent); font-size: 13px; }
 
     /* ── Consent ─────────────────────────────────────────────────────────── */
     .checkbox-label {
@@ -1019,7 +1020,6 @@
     <div class="form-section">
       <h2>Review &amp; submit</h2>
       <div id="summary" class="summary"></div>
-      <div id="summary-warnings" style="margin-bottom:12px;font-size:13px;display:none"></div>
 
       <div class="field">
         <label class="checkbox-label">
@@ -1357,6 +1357,8 @@ function updateRequirementsCounter() {
   if (videoOver > 0) {
     const photosToRemove = Math.ceil(videoOver / CONFIG.videoSlotSeconds);
     el.innerHTML = `<span class="req-unmet">⚠ Remove ${photosToRemove} photo${photosToRemove !== 1 ? 's' : ''} or ${videoOver.toFixed(0)}s of video</span>`;
+  } else if (photosNeeded > 0 && videoLeft > 0) {
+    el.innerHTML = `<span class="req-unmet">Add ${photosNeeded} more photo${photosNeeded !== 1 ? 's' : ''} or ${videoLeft.toFixed(0)}s of video</span>`;
   } else if (photosNeeded > 0) {
     el.innerHTML = `<span class="req-unmet">Add ${photosNeeded} more photo${photosNeeded !== 1 ? 's' : ''}</span>`;
   } else if (videoLeft > 0) {
@@ -2298,56 +2300,36 @@ function updateSummary() {
   if (videoCount > 0) mediaParts.push(`${videoCount} clip${videoCount !== 1 ? 's' : ''} (${totalSecs.toFixed(1)}s)`);
   const mediaSummary = mediaParts.join(' · ') || '';
 
-  document.getElementById('summary').innerHTML =
-    summaryRow('To',          toVal,         !!toVal) +
-    summaryRow('Tone',        tone,          !!tone) +
-    summaryRow('Genre',       genreName,     !!genreName) +
-    summaryRow('Media',       mediaSummary,  mediaReady) +
-    summaryRow('Their story', story,         storyFilled);
-
-  updateSummaryWarnings({ photoCount, minPhotos, totalSecs, maxVideo, bookendOk });
-}
-
-function updateSummaryWarnings({ photoCount, minPhotos, totalSecs, maxVideo, bookendOk }) {
-  const el = document.getElementById('summary-warnings');
-  if (!el) return;
-
+  // Build inline warnings for the summary box
   const warnings = [];
-
   if (state.media.length > 0 && !bookendOk) {
-    warnings.push('First and last items must be photos — rearrange your media above');
+    warnings.push('First and last items must be photos — rearrange your media');
   }
-
   const photosNeeded = Math.max(0, minPhotos - photoCount);
   if (photosNeeded > 0) {
-    warnings.push(`Add ${photosNeeded} more photo${photosNeeded !== 1 ? 's' : ''} before submitting`);
+    warnings.push(`Add ${photosNeeded} more photo${photosNeeded !== 1 ? 's' : ''}`);
   }
-
   const videoOver = Math.max(0, totalSecs - maxVideo);
   if (videoOver > 0) {
     const n = Math.ceil(videoOver / CONFIG.videoSlotSeconds);
     warnings.push(`Over video limit — remove ${n} photo${n !== 1 ? 's' : ''} or ${videoOver.toFixed(0)}s of video`);
   }
-
   const failedCount = state.media.filter(m => m.status === 'failed').length;
-  if (failedCount > 0) {
-    warnings.push(`${failedCount} item${failedCount !== 1 ? 's' : ''} failed to upload — tap to retry`);
-  }
-
+  if (failedCount > 0) warnings.push(`${failedCount} item${failedCount !== 1 ? 's' : ''} failed to upload — tap to retry`);
   const uploadingCount = state.media.filter(m => m.status === 'uploading').length;
-  if (uploadingCount > 0) {
-    warnings.push(`${uploadingCount} item${uploadingCount !== 1 ? 's' : ''} still uploading — wait before submitting`);
-  }
+  if (uploadingCount > 0) warnings.push(`${uploadingCount} item${uploadingCount !== 1 ? 's' : ''} still uploading`);
 
-  if (warnings.length === 0) {
-    el.style.display = 'none';
-    return;
-  }
-
-  el.style.display = '';
-  el.innerHTML = warnings
-    .map(w => `<div style="color:var(--accent);margin-bottom:4px;">⚠ ${w}</div>`)
+  const warningRows = warnings
+    .map(w => `<div class="summary-row"><span class="summary-warning">⚠ ${w}</span></div>`)
     .join('');
+
+  document.getElementById('summary').innerHTML =
+    summaryRow('To',          toVal,         !!toVal) +
+    summaryRow('Tone',        tone,          !!tone) +
+    summaryRow('Genre',       genreName,     !!genreName) +
+    summaryRow('Media',       mediaSummary,  mediaReady) +
+    summaryRow('Their story', story,         storyFilled) +
+    warningRows;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
