@@ -207,76 +207,110 @@
       margin-top: 10px;
     }
 
-    /* ── Genre list — compact radio style ────────────────────────────────── */
-    .genre-list {
+    /* ── Genre dial ─────────────────────────────────────────────────────── */
+    .genre-dial-wrap {
       border: 1.5px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
+      background: #fafaf9;
     }
-    .genre-item {
+    .genre-dial-box {
+      height: 256px;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 22%, black 78%, transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0%, black 22%, black 78%, transparent 100%);
+    }
+    .genre-dial-track {
+      height: 100%;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
       display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 13px 14px;
-      background: var(--surface);
+      flex-direction: column;
+      gap: 8px;
+      padding: 100px 10px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      box-sizing: border-box;
+    }
+    .genre-dial-track::-webkit-scrollbar { display: none; }
+
+    .genre-dial-item {
+      flex: 0 0 auto;
+      scroll-snap-align: center;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      background: #fff;
       cursor: pointer;
-      border-bottom: 1px solid var(--border);
-      transition: background 0.1s;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
       outline: none;
-    }
-    .genre-item:last-child { border-bottom: none; }
-    .genre-item:hover { background: #fef7f0; }
-    .genre-item:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
-    .genre-item.selected { background: #fff7ed; padding-left: 11px; border-left: 3px solid var(--accent); }
-
-    .genre-radio {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      flex-shrink: 0;
       display: flex;
       align-items: center;
-      justify-content: center;
-      transition: border-color 0.15s, background 0.15s;
+      justify-content: space-between;
+      gap: 10px;
+      transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                  border-color 0.15s, background 0.15s, box-shadow 0.15s;
     }
-    .genre-item.selected .genre-radio { border-color: var(--accent); background: var(--accent); }
-    .genre-item.selected .genre-radio::after {
-      content: '';
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #fff;
+    .genre-dial-item:active { transform: scale(0.96); }
+    .genre-dial-item.centered {
+      border-color: #c4b8e4;
+      box-shadow: 0 2px 10px rgba(107, 90, 158, 0.12);
     }
+    .genre-dial-item.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 6px 18px rgba(107, 90, 158, 0.3);
+      transform: scale(1.02);
+    }
+    .genre-dial-item.selected:active { transform: scale(0.98); }
 
-    .genre-info { flex: 1; min-width: 0; }
-    .genre-name { font-size: 15px; font-weight: 500; }
-    .genre-desc { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    .genre-play-btn {
-      flex-shrink: 0;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      border: 1.5px solid var(--border);
-      background: var(--surface);
+    .dial-genre-info { flex: 1; min-width: 0; }
+    .dial-genre-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      transition: color 0.15s;
+    }
+    .dial-genre-desc {
+      font-size: 12px;
       color: var(--muted);
-      font-size: 10px;
-      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+      transition: color 0.15s;
+    }
+    .genre-dial-item.centered:not(.selected) .dial-genre-name { color: var(--accent); }
+    .genre-dial-item.selected .dial-genre-name,
+    .genre-dial-item.selected .dial-genre-desc { color: #fff; }
+    .genre-dial-item.selected .dial-genre-desc { opacity: 0.8; }
+
+    .dial-audio-indicator {
+      flex-shrink: 0;
+      width: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0;
-      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      font-size: 10px;
+      color: var(--muted);
+      opacity: 0.5;
+      transition: opacity 0.15s, color 0.15s;
     }
-    .genre-play-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .genre-play-btn.playing { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .genre-dial-item.centered:not(.selected) .dial-audio-indicator { opacity: 1; color: var(--accent); }
+    .genre-dial-item.selected .dial-audio-indicator { opacity: 1; color: #fff; }
 
-    .genre-preview-soon { flex-shrink: 0; font-size: 11px; color: var(--muted); text-align: right; line-height: 1.3; }
-    .genre-preview-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
-    .genre-preview-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .dial-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+    .dial-bar {
+      width: 3px;
+      background: currentColor;
+      border-radius: 1px;
+      animation: dialBounce 0.5s ease infinite alternate;
+    }
+    .dial-bar:nth-child(2) { animation-delay: 0.15s; }
+    .dial-bar:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes dialBounce { from { height: 3px; } to { height: 14px; } }
 
     .genre-suggest-wrap { margin-top: 12px; }
     .genre-suggest-trigger {
@@ -375,6 +409,55 @@
       text-align: center;
       display: none;
     }
+
+    /* ── Story tabs ─────────────────────────────────────────────────────── */
+    .story-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .story-tab {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .story-tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: #f5f0fc;
+    }
+    .char-counter {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: right;
+      margin-top: 3px;
+      min-height: 14px;
+    }
+    .char-counter.near { color: #f59e0b; }
+    .char-counter.full { color: var(--error); font-weight: 600; }
+    #panel-freewrite textarea {
+      width: 100%;
+      min-height: 90px;
+      resize: vertical;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      box-sizing: border-box;
+      line-height: 1.5;
+    }
+    #panel-freewrite textarea:focus { outline: none; border-color: var(--accent); }
 
     /* ── Shoutout preview ────────────────────────────────────────────────── */
     .shoutout-preview {
@@ -944,7 +1027,11 @@
       <div class="field" style="margin-bottom:0;">
         <label>Song style</label>
         <div class="error-msg" id="genre-error"></div>
-        <div id="genre-list" class="genre-list" role="radiogroup" aria-label="Song style"></div>
+        <div class="genre-dial-wrap">
+          <div class="genre-dial-box">
+            <div id="genre-list" class="genre-dial-track" role="radiogroup" aria-label="Song style"></div>
+          </div>
+        </div>
         <div class="genre-suggest-wrap">
           <button type="button" class="genre-suggest-trigger" id="genre-suggest-trigger">Don't see your vibe? Suggest one</button>
           <input type="text" id="genre-suggestion" class="genre-suggest-input" placeholder="e.g. Jazz, Metal, K-Pop…" autocomplete="off" style="display:none">
@@ -955,29 +1042,52 @@
     <!-- 2. Their story -->
     <div class="form-section">
       <h2>Their story</h2>
-      <div class="hint" style="margin-bottom:14px;">Pick one quirky habit or funny thing they always do. The weirder and more specific, the better the song!</div>
 
-      <div class="field">
-        <label for="shoutout-what">What do they always do?</label>
-        <input type="text" id="shoutout-what" autocomplete="off" placeholder="Takes off her jeans">
-        <div class="error-msg" id="shoutout-what-error"></div>
+      <div class="story-tabs" role="tablist">
+        <button type="button" class="story-tab active" id="tab-structured" role="tab" aria-selected="true">Step by step</button>
+        <button type="button" class="story-tab" id="tab-freewrite" role="tab" aria-selected="false">Have a funny story?</button>
       </div>
 
-      <div class="field">
-        <label for="shoutout-when">When or where?</label>
-        <input type="text" id="shoutout-when" autocomplete="off" placeholder="The second she gets home">
-        <div class="error-msg" id="shoutout-when-error"></div>
+      <!-- Structured panel -->
+      <div id="panel-structured">
+        <div class="hint" style="margin-bottom:14px;">Pick one quirky habit or funny thing they always do. The weirder and more specific, the better the song!</div>
+
+        <div class="field">
+          <label for="shoutout-what">What do they always do?</label>
+          <input type="text" id="shoutout-what" autocomplete="off" placeholder="Takes off her jeans" maxlength="40">
+          <div class="char-counter" id="shoutout-what-counter"></div>
+          <div class="error-msg" id="shoutout-what-error"></div>
+        </div>
+
+        <div class="field">
+          <label for="shoutout-when">When or where?</label>
+          <input type="text" id="shoutout-when" autocomplete="off" placeholder="The second she gets home" maxlength="40">
+          <div class="char-counter" id="shoutout-when-counter"></div>
+          <div class="error-msg" id="shoutout-when-error"></div>
+        </div>
+
+        <div class="field" style="margin-bottom:0;">
+          <label for="shoutout-result">And then what happens?</label>
+          <input type="text" id="shoutout-result" autocomplete="off" placeholder="Lives in sweats 24/7" maxlength="50">
+          <div class="char-counter" id="shoutout-result-counter"></div>
+          <div class="error-msg" id="shoutout-result-error"></div>
+        </div>
+
+        <div class="shoutout-preview">
+          <span class="shoutout-preview-label">Preview</span>
+          <span id="shoutout-preview-text"></span>
+        </div>
       </div>
 
-      <div class="field" style="margin-bottom:0;">
-        <label for="shoutout-result">And then what happens?</label>
-        <input type="text" id="shoutout-result" autocomplete="off" placeholder="Lives in sweats 24/7">
-        <div class="error-msg" id="shoutout-result-error"></div>
-      </div>
-
-      <div class="shoutout-preview">
-        <span class="shoutout-preview-label">Preview</span>
-        <span id="shoutout-preview-text"></span>
+      <!-- Free-write panel -->
+      <div id="panel-freewrite" hidden>
+        <div class="hint" style="margin-bottom:14px;">Write 2–3 tight sentences. One clear funny angle works best — specific beats generic every time.</div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="shoutout-freewrite">Their story</label>
+          <textarea id="shoutout-freewrite" autocomplete="off" maxlength="150" placeholder="e.g. Dave burns every meal he makes, somehow even cereal. The smoke alarm is basically his sous chef."></textarea>
+          <div class="char-counter" id="shoutout-freewrite-counter"></div>
+          <div class="error-msg" id="shoutout-freewrite-error"></div>
+        </div>
       </div>
     </div>
 
@@ -1117,6 +1227,7 @@ const state = {
   uploadCounter: 0,
   selectedGenre: null,
   tone:          null,
+  storyMode:     'structured',  // 'structured' | 'freewrite'
   activeAudio:   null,
   activePlayBtn: null,
 };
@@ -1140,11 +1251,11 @@ function isValidGenre(g) {
 
 function generateOrderId() {
   const now  = new Date();
-  const yy   = String(now.getFullYear()).slice(2);
-  const mm   = String(now.getMonth() + 1).padStart(2, '0');
-  const dd   = String(now.getDate()).padStart(2, '0');
-  const hh   = String(now.getHours()).padStart(2, '0');
-  const min  = String(now.getMinutes()).padStart(2, '0');
+  const yy   = String(now.getUTCFullYear()).slice(2);
+  const mm   = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const dd   = String(now.getUTCDate()).padStart(2, '0');
+  const hh   = String(now.getUTCHours()).padStart(2, '0');
+  const min  = String(now.getUTCMinutes()).padStart(2, '0');
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   const rand  = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
   return `${yy}${mm}${dd}-${hh}${min}-${rand}`;
@@ -1186,15 +1297,17 @@ const STORAGE_KEY = 'instatoast_v1';
 
 function saveToStorage() {
   const data = {
-    senderName:      document.getElementById('sender-name').value,
-    senderEmail:     document.getElementById('sender-email').value,
-    recipientName:   document.getElementById('recipient-name').value,
-    shoutoutWhat:    document.getElementById('shoutout-what').value,
-    shoutoutWhen:    document.getElementById('shoutout-when').value,
-    shoutoutResult:  document.getElementById('shoutout-result').value,
-    tone:            state.tone,
-    genre:           state.selectedGenre,
-    genreSuggestion: document.getElementById('genre-suggestion').value,
+    senderName:       document.getElementById('sender-name').value,
+    senderEmail:      document.getElementById('sender-email').value,
+    recipientName:    document.getElementById('recipient-name').value,
+    shoutoutWhat:     document.getElementById('shoutout-what').value,
+    shoutoutWhen:     document.getElementById('shoutout-when').value,
+    shoutoutResult:   document.getElementById('shoutout-result').value,
+    shoutoutFreewrite: document.getElementById('shoutout-freewrite').value,
+    storyMode:        state.storyMode,
+    tone:             state.tone,
+    genre:            state.selectedGenre,
+    genreSuggestion:  document.getElementById('genre-suggestion').value,
   };
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
 }
@@ -1207,15 +1320,17 @@ function restoreFromStorage() {
   if (data.senderName)     document.getElementById('sender-name').value     = data.senderName;
   if (data.senderEmail)    document.getElementById('sender-email').value    = data.senderEmail;
   if (data.recipientName)  document.getElementById('recipient-name').value  = data.recipientName;
-  if (data.shoutoutWhat)   document.getElementById('shoutout-what').value   = data.shoutoutWhat;
-  if (data.shoutoutWhen)   document.getElementById('shoutout-when').value   = data.shoutoutWhen;
-  if (data.shoutoutResult) document.getElementById('shoutout-result').value = data.shoutoutResult;
+  if (data.shoutoutWhat)      document.getElementById('shoutout-what').value      = data.shoutoutWhat;
+  if (data.shoutoutWhen)      document.getElementById('shoutout-when').value      = data.shoutoutWhen;
+  if (data.shoutoutResult)    document.getElementById('shoutout-result').value    = data.shoutoutResult;
+  if (data.shoutoutFreewrite) document.getElementById('shoutout-freewrite').value = data.shoutoutFreewrite;
+  if (data.storyMode)         selectStoryMode(data.storyMode);
 
   if (data.tone) selectTone(data.tone);
 
   if (data.genre) {
     state.selectedGenre = data.genre;
-    document.querySelectorAll('.genre-item').forEach(el => {
+    document.querySelectorAll('.genre-dial-item').forEach(el => {
       el.classList.toggle('selected', el.dataset.key === data.genre);
       el.setAttribute('aria-checked', String(el.dataset.key === data.genre));
     });
@@ -2142,52 +2257,78 @@ function initToneButtons() {
 // Genre list
 // ─────────────────────────────────────────────────────────────────────────────
 function renderGenres() {
-  const list = document.getElementById('genre-list');
+  const track = document.getElementById('genre-list');
+
   CONFIG.genres.forEach(genre => {
     if (!isValidGenre(genre)) return;
-
     const hasAudio = isValidAudioUrl(genre.audioUrl);
+
     const item = document.createElement('div');
-    item.className = 'genre-item';
+    item.className = 'genre-dial-item';
     item.dataset.key = genre.key;
     item.setAttribute('role', 'radio');
     item.setAttribute('aria-checked', 'false');
     item.setAttribute('tabindex', '0');
-
     item.innerHTML = `
-      <div class="genre-radio" aria-hidden="true"></div>
-      <div class="genre-info">
-        <div class="genre-name">${genre.name}</div>
-        <div class="genre-desc">${genre.description}</div>
+      <div class="dial-genre-info">
+        <div class="dial-genre-name">${genre.name}</div>
+        <div class="dial-genre-desc">${genre.description}</div>
       </div>
-      <div class="genre-preview">
-        ${hasAudio
-          ? `<div class="genre-preview-wrap"><button type="button" class="genre-play-btn" data-audio="${genre.audioUrl}" aria-label="Preview ${genre.name}">▶</button><span class="genre-preview-label">Preview style</span></div>`
-          : `<span class="genre-preview-soon">preview<br>coming soon</span>`}
+      <div class="dial-audio-indicator">
+        ${hasAudio ? '▶' : ''}
       </div>`;
 
-    item.addEventListener('click', e => {
-      if (e.target.closest('.genre-play-btn')) return;
-      selectGenre(genre.key);
-    });
+    item.addEventListener('click', () => selectGenre(genre.key));
     item.addEventListener('keydown', e => {
       if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); selectGenre(genre.key); }
     });
 
-    if (hasAudio) {
-      item.querySelector('.genre-play-btn').addEventListener('click', e => {
-        e.stopPropagation();
-        toggleAudioPreview(e.currentTarget, genre.audioUrl);
-      });
-    }
-
-    list.appendChild(item);
+    track.appendChild(item);
   });
+
+  track.addEventListener('scroll', () => updateDialCentered(track), { passive: true });
+  requestAnimationFrame(() => updateDialCentered(track));
+}
+
+function updateDialCentered(track) {
+  const trackRect = track.getBoundingClientRect();
+  const centerY = trackRect.top + trackRect.height / 2;
+  let closest = null, minDist = Infinity;
+  track.querySelectorAll('.genre-dial-item').forEach(item => {
+    const r = item.getBoundingClientRect();
+    const dist = Math.abs((r.top + r.height / 2) - centerY);
+    if (dist < minDist) { minDist = dist; closest = item; }
+  });
+  track.querySelectorAll('.genre-dial-item').forEach(el => el.classList.remove('centered'));
+  if (closest) closest.classList.add('centered');
+}
+
+function scrollToSelected() {
+  const track = document.getElementById('genre-list');
+  const selected = track?.querySelector('.genre-dial-item.selected');
+  if (selected) {
+    selected.scrollIntoView({ block: 'center', behavior: 'instant' });
+    requestAnimationFrame(() => updateDialCentered(track));
+  }
 }
 
 function selectGenre(key) {
+  // Stop any playing audio and reset its indicator
+  if (state.activeAudio) {
+    state.activeAudio.pause();
+    state.activeAudio.currentTime = 0;
+    state.activeAudio = null;
+  }
+  if (state.activePlayBtn) {
+    state.activePlayBtn.innerHTML = '▶';
+    state.activePlayBtn = null;
+  }
+
+  // Tapping the already-selected genre just stops audio (handled above) — stay selected
+  if (state.selectedGenre === key) return;
+
   state.selectedGenre = key;
-  document.querySelectorAll('.genre-item').forEach(el => {
+  document.querySelectorAll('.genre-dial-item').forEach(el => {
     const active = el.dataset.key === key;
     el.classList.toggle('selected', active);
     el.setAttribute('aria-checked', String(active));
@@ -2195,31 +2336,24 @@ function selectGenre(key) {
   clearError('genre-error');
   updateSummary();
   saveToStorage();
-}
 
-function toggleAudioPreview(btn, audioUrl) {
-  if (state.activeAudio && !state.activeAudio.paused) {
-    state.activeAudio.pause();
-    state.activeAudio.currentTime = 0;
-    if (state.activePlayBtn) {
-      state.activePlayBtn.classList.remove('playing');
-      state.activePlayBtn.textContent = '▶';
-    }
-    if (state.activePlayBtn === btn) {
-      state.activeAudio = null;
-      state.activePlayBtn = null;
-      return;
-    }
-  }
-  const audio = new Audio(audioUrl);
+  // Auto-play preview if available
+  const genre = CONFIG.genres.find(g => g.key === key);
+  if (!genre || !isValidAudioUrl(genre.audioUrl)) return;
+
+  const indicator = document.querySelector(`.genre-dial-item[data-key="${key}"] .dial-audio-indicator`);
+  const audio = new Audio(genre.audioUrl);
   state.activeAudio   = audio;
-  state.activePlayBtn = btn;
-  btn.classList.add('playing');
-  btn.textContent = '■';
-  audio.play().catch(() => { btn.classList.remove('playing'); btn.textContent = '▶'; });
+  state.activePlayBtn = indicator;
+  if (indicator) indicator.innerHTML = '<div class="dial-bars"><div class="dial-bar"></div><div class="dial-bar"></div><div class="dial-bar"></div></div>';
+
+  audio.play().catch(() => {
+    if (indicator) indicator.innerHTML = '▶';
+    state.activeAudio   = null;
+    state.activePlayBtn = null;
+  });
   audio.addEventListener('ended', () => {
-    btn.classList.remove('playing');
-    btn.textContent = '▶';
+    if (indicator) indicator.innerHTML = '▶';
     state.activeAudio   = null;
     state.activePlayBtn = null;
   });
@@ -2228,7 +2362,36 @@ function toggleAudioPreview(btn, audioUrl) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Summary
 // ─────────────────────────────────────────────────────────────────────────────
+function selectStoryMode(mode) {
+  state.storyMode = mode;
+  document.getElementById('panel-structured').hidden = (mode !== 'structured');
+  document.getElementById('panel-freewrite').hidden  = (mode !== 'freewrite');
+  document.getElementById('tab-structured').classList.toggle('active', mode === 'structured');
+  document.getElementById('tab-freewrite').classList.toggle('active',  mode === 'freewrite');
+  document.getElementById('tab-structured').setAttribute('aria-selected', String(mode === 'structured'));
+  document.getElementById('tab-freewrite').setAttribute('aria-selected',  String(mode === 'freewrite'));
+  // Clear errors from the panel being hidden
+  ['shoutout-what-error','shoutout-when-error','shoutout-result-error','shoutout-freewrite-error']
+    .forEach(id => clearError(id));
+  updateShoutoutPreview();
+  saveToStorage();
+  updateSummary();
+}
+
+function updateCharCounter(inputId, counterId, max) {
+  const input = document.getElementById(inputId);
+  const counter = document.getElementById(counterId);
+  if (!input || !counter) return;
+  const len = input.value.length;
+  if (len === 0) { counter.textContent = ''; counter.className = 'char-counter'; return; }
+  counter.textContent = `${len}/${max}`;
+  counter.className = 'char-counter' + (len >= max ? ' full' : len >= max * 0.8 ? ' near' : '');
+}
+
 function buildShoutout() {
+  if (state.storyMode === 'freewrite') {
+    return document.getElementById('shoutout-freewrite').value.trim();
+  }
   const name   = document.getElementById('recipient-name').value.trim();
   const what   = document.getElementById('shoutout-what').value.trim();
   const when   = document.getElementById('shoutout-when').value.trim();
@@ -2247,6 +2410,10 @@ function buildShoutout() {
 }
 
 function updateShoutoutPreview() {
+  if (state.storyMode === 'freewrite') {
+    document.querySelector('.shoutout-preview').style.display = 'none';
+    return;
+  }
   const what   = document.getElementById('shoutout-what').value.trim();
   const when   = document.getElementById('shoutout-when').value.trim();
   const result = document.getElementById('shoutout-result').value.trim();
@@ -2277,11 +2444,12 @@ function updateSummary() {
   const genreName  = state.selectedGenre
     ? (CONFIG.genres.find(g => g.key === state.selectedGenre)?.name ?? state.selectedGenre)
     : '';
-  const what    = document.getElementById('shoutout-what').value.trim();
-  const when    = document.getElementById('shoutout-when').value.trim();
-  const result  = document.getElementById('shoutout-result').value.trim();
-  const storyFilled = what && when && result;
-  const story   = storyFilled ? buildShoutout() : '';
+  const storyFilled = state.storyMode === 'freewrite'
+    ? !!document.getElementById('shoutout-freewrite').value.trim()
+    : !!(document.getElementById('shoutout-what').value.trim()
+      && document.getElementById('shoutout-when').value.trim()
+      && document.getElementById('shoutout-result').value.trim());
+  const story = storyFilled ? buildShoutout() : '';
 
   // Media summary
   const minPhotos   = calcMinPhotos();
@@ -2361,9 +2529,10 @@ function validateField(id) {
   if (id === 'sender-email')   { if (!val) { showError('sender-email-error',    'Your email is required.');                                       return false; }
                                   if (!isValidEmail(val)) { showError('sender-email-error', 'Enter a valid email address.'); return false; } }
   if (id === 'recipient-name') { if (!val) { showError('recipient-name-error',  'Their name is required.');                                       return false; } }
-  if (id === 'shoutout-what')  { if (!val) { showError('shoutout-what-error',   'Tell us what they do.');                                         return false; } }
-  if (id === 'shoutout-when')  { if (!val) { showError('shoutout-when-error',   'Tell us when or where.');                                        return false; } }
-  if (id === 'shoutout-result'){ if (!val) { showError('shoutout-result-error', 'Tell us what happens.');                                         return false; } }
+  if (id === 'shoutout-what')     { if (!val) { showError('shoutout-what-error',     'Tell us what they do.');     return false; } }
+  if (id === 'shoutout-when')     { if (!val) { showError('shoutout-when-error',     'Tell us when or where.');   return false; } }
+  if (id === 'shoutout-result')   { if (!val) { showError('shoutout-result-error',   'Tell us what happens.');    return false; } }
+  if (id === 'shoutout-freewrite'){ if (!val) { showError('shoutout-freewrite-error','Write their story.');       return false; } }
   clearError(`${id}-error`);
   return true;
 }
@@ -2374,7 +2543,11 @@ function validateAll() {
   // Text fields
   ['sender-name', 'sender-email', 'recipient-name'].forEach(id => { if (!validateField(id)) ok = false; });
   if (!state.tone) { showError('tone-error', 'Please choose a tone.'); ok = false; } else clearError('tone-error');
-  ['shoutout-what', 'shoutout-when', 'shoutout-result'].forEach(id => { if (!validateField(id)) ok = false; });
+  if (state.storyMode === 'freewrite') {
+    if (!validateField('shoutout-freewrite')) ok = false;
+  } else {
+    ['shoutout-what', 'shoutout-when', 'shoutout-result'].forEach(id => { if (!validateField(id)) ok = false; });
+  }
 
   // Media validation — unified tray
   const photoCount  = state.media.filter(m => m.type === 'photo').length;
@@ -2488,9 +2661,10 @@ async function handleSubmit(e) {
       sender_email:     document.getElementById('sender-email').value.trim(),
       recipient_name:   document.getElementById('recipient-name').value.trim(),
       occasion:         CONFIG.occasion,
-      shoutout_action:  document.getElementById('shoutout-what').value.trim(),
-      shoutout_when:    document.getElementById('shoutout-when').value.trim(),
-      shoutout_result:  document.getElementById('shoutout-result').value.trim(),
+      shoutout_mode:    state.storyMode,
+      shoutout_action:  state.storyMode === 'structured' ? document.getElementById('shoutout-what').value.trim()    : null,
+      shoutout_when:    state.storyMode === 'structured' ? document.getElementById('shoutout-when').value.trim()    : null,
+      shoutout_result:  state.storyMode === 'structured' ? document.getElementById('shoutout-result').value.trim()  : null,
       shoutout_full:    buildShoutout(),
       tone:             state.tone,
       genre:            state.selectedGenre,
@@ -2619,6 +2793,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMediaTray();
   updateSummary();
   restoreFromStorage();
+  scrollToSelected();
 
   // Text input listeners
   ['sender-name', 'sender-email', 'recipient-name'].forEach(id => {
@@ -2631,11 +2806,26 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('blur', () => validateField(id));
   });
 
+  document.getElementById('tab-structured').addEventListener('click', () => selectStoryMode('structured'));
+  document.getElementById('tab-freewrite').addEventListener('click',  () => selectStoryMode('freewrite'));
+
+  const charLimits = { 'shoutout-what': 40, 'shoutout-when': 40, 'shoutout-result': 50, 'shoutout-freewrite': 150 };
   ['shoutout-what', 'shoutout-when', 'shoutout-result'].forEach(id => {
     const el = document.getElementById(id);
-    el.addEventListener('input', () => { updateShoutoutPreview(); saveToStorage(); updateSummary(); });
-    el.addEventListener('blur',  () => validateField(id));
+    el.addEventListener('input', () => {
+      updateCharCounter(id, `${id}-counter`, charLimits[id]);
+      updateShoutoutPreview(); saveToStorage(); updateSummary();
+    });
+    el.addEventListener('blur', () => validateField(id));
   });
+
+  const freewrite = document.getElementById('shoutout-freewrite');
+  freewrite.addEventListener('input', () => {
+    updateCharCounter('shoutout-freewrite', 'shoutout-freewrite-counter', 150);
+    updateShoutoutPreview(); saveToStorage(); updateSummary();
+  });
+  freewrite.addEventListener('blur', () => validateField('shoutout-freewrite'));
+
   updateShoutoutPreview();
 
   document.getElementById('consent').addEventListener('change', () => {
