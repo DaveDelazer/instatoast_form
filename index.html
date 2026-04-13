@@ -445,14 +445,14 @@
       width: 30px;
       height: 30px;
       border: none;
-      background: var(--bg);
+      background: #fff;
       border-radius: 50%;
       font-size: 16px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--muted);
+      color: #111;
     }
 
     .crop-hint {
@@ -2315,7 +2315,7 @@ function updateSummary() {
     warnings.push('First and last items must be photos — rearrange your media');
   }
   const photosNeeded = Math.max(0, minPhotos - photoCount);
-  if (photosNeeded > 0) {
+  if (photosNeeded > 0 && state.media.length > 0) {
     warnings.push(`Add ${photosNeeded} more photo${photosNeeded !== 1 ? 's' : ''}`);
   }
   const videoOver = Math.max(0, totalSecs - maxVideo);
@@ -2489,48 +2489,36 @@ async function handleSubmit(e) {
   setProgress(0, 10, 'Sending your order…');
 
   try {
-    // First item = opener, last item = closer, everything in between = middle
-    const opener       = state.media[0];
-    const closer       = state.media[state.media.length - 1];
-    const middleItems  = state.media.slice(1, -1);
-    const middlePhotos = middleItems.filter(m => m.type === 'photo');
-    const middleVideos = middleItems.filter(m => m.type === 'video');
-
     const payload = {
-      order_id:            state.orderId,
-      sender_name:         document.getElementById('sender-name').value.trim(),
-      sender_email:        document.getElementById('sender-email').value.trim(),
-      recipient_name:      document.getElementById('recipient-name').value.trim(),
-      occasion:            CONFIG.occasion,
-      shoutout_action:     document.getElementById('shoutout-what').value.trim(),
-      shoutout_when:       document.getElementById('shoutout-when').value.trim(),
-      shoutout_result:     document.getElementById('shoutout-result').value.trim(),
-      shoutout_full:       buildShoutout(),
-      tone:                state.tone,
-      genre:               state.selectedGenre,
-      genre_suggestion:    document.getElementById('genre-suggestion').value.trim() || null,
-      opener_photo_url:    opener.publicUrl,
-      closer_photo_url:    closer.publicUrl,
-      photo_urls:          middlePhotos.map(m => m.publicUrl),
-      photo_count:         middlePhotos.length,
-      video_urls:          middleVideos.map(m => m.publicUrl),
-      video_count:         middleVideos.length,
-      video_metadata:      middleVideos.map(m => m.trimMeta ? {
-        url:          m.publicUrl,
-        in_point:     m.trimMeta.inPoint,
-        out_point:    m.trimMeta.outPoint,
-        crop_scale:   m.trimMeta.cropScale,
-        crop_pan_x:   m.trimMeta.cropPanX,
-        crop_pan_y:   m.trimMeta.cropPanY,
-        video_w:      m.trimMeta.videoW,
-        video_h:      m.trimMeta.videoH,
-        container_w:  m.trimMeta.containerW,
-        container_h:  m.trimMeta.containerH,
-      } : null).filter(Boolean),
-      media_order:         state.media.map(m => ({ url: m.publicUrl, type: m.type })),
-      total_video_seconds: parseFloat(getTotalVideoSeconds().toFixed(2)),
-      consent:             document.getElementById('consent').checked,
-      submitted_at:        new Date().toISOString(),
+      order_id:         state.orderId,
+      sender_name:      document.getElementById('sender-name').value.trim(),
+      sender_email:     document.getElementById('sender-email').value.trim(),
+      recipient_name:   document.getElementById('recipient-name').value.trim(),
+      occasion:         CONFIG.occasion,
+      shoutout_action:  document.getElementById('shoutout-what').value.trim(),
+      shoutout_when:    document.getElementById('shoutout-when').value.trim(),
+      shoutout_result:  document.getElementById('shoutout-result').value.trim(),
+      shoutout_full:    buildShoutout(),
+      tone:             state.tone,
+      genre:            state.selectedGenre,
+      genre_suggestion: document.getElementById('genre-suggestion').value.trim() || null,
+      media_order:      state.media.map(m => {
+        const item = { url: m.publicUrl, type: m.type };
+        if (m.type === 'video' && m.trimMeta) {
+          item.in_point    = m.trimMeta.inPoint;
+          item.out_point   = m.trimMeta.outPoint;
+          item.crop_scale  = m.trimMeta.cropScale;
+          item.crop_pan_x  = m.trimMeta.cropPanX;
+          item.crop_pan_y  = m.trimMeta.cropPanY;
+          item.video_w     = m.trimMeta.videoW;
+          item.video_h     = m.trimMeta.videoH;
+          item.container_w = m.trimMeta.containerW;
+          item.container_h = m.trimMeta.containerH;
+        }
+        return item;
+      }),
+      consent:      document.getElementById('consent').checked,
+      submitted_at: new Date().toISOString(),
     };
 
     setProgress(5, 10, 'Sending your order…');
