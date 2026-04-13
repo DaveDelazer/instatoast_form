@@ -495,10 +495,18 @@
       touch-action: none;
       transform: translateZ(0);
       clip-path: inset(0 round 4px);
-      border: 1.5px solid rgba(255,255,255,0.25);
       border-radius: 4px;
     }
     .video-crop-frame:active { cursor: grabbing; }
+    .video-crop-frame::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2px solid rgba(255,255,255,0.55);
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 1;
+    }
 
     /* Video element inside crop frame — positioned by JS */
     .video-crop-frame video {
@@ -975,7 +983,7 @@
     <!-- 3. Photos & video -->
     <div class="form-section">
       <h2>Photos &amp; video</h2>
-      <div class="hint" style="margin-bottom:14px;">Add your photos and video clips. First and last must be photos (opener &amp; closer).</div>
+      <div class="hint" style="margin-bottom:14px;">Add your photos and video clips. First and last must be photos (opener &amp; closer). Drag to reorder.</div>
 
       <div id="media-tray" class="media-tray"></div>
       <button type="button" id="add-media-btn" class="btn-secondary" style="margin-bottom:8px;">＋ Add photos or video</button>
@@ -1011,6 +1019,7 @@
     <div class="form-section">
       <h2>Review &amp; submit</h2>
       <div id="summary" class="summary"></div>
+      <div id="summary-warnings" style="margin-bottom:12px;font-size:13px;display:none"></div>
 
       <div class="field">
         <label class="checkbox-label">
@@ -1350,8 +1359,16 @@ function updateRequirementsCounter() {
     el.innerHTML = `<span class="req-unmet">⚠ Remove ${photosToRemove} photo${photosToRemove !== 1 ? 's' : ''} or ${videoOver.toFixed(0)}s of video</span>`;
   } else if (photosNeeded > 0) {
     el.innerHTML = `<span class="req-unmet">Add ${photosNeeded} more photo${photosNeeded !== 1 ? 's' : ''}</span>`;
-  } else if (totalSecs > 0 && videoLeft > 0) {
-    el.innerHTML = `<span class="req-met">${videoLeft.toFixed(0)}s of video available</span>`;
+  } else if (videoLeft > 0) {
+    const photosCanAdd = Math.min(
+      Math.floor(videoLeft / CONFIG.videoSlotSeconds),
+      CONFIG.maxMediaItems - state.media.length
+    );
+    if (photosCanAdd > 0) {
+      el.innerHTML = `<span class="req-met">${photosCanAdd} more photo${photosCanAdd !== 1 ? 's' : ''} or ${videoLeft.toFixed(0)}s of video available</span>`;
+    } else {
+      el.innerHTML = `<span class="req-met">${videoLeft.toFixed(0)}s of video available</span>`;
+    }
   } else {
     el.innerHTML = '';
   }
@@ -2287,6 +2304,50 @@ function updateSummary() {
     summaryRow('Genre',       genreName,     !!genreName) +
     summaryRow('Media',       mediaSummary,  mediaReady) +
     summaryRow('Their story', story,         storyFilled);
+
+  updateSummaryWarnings({ photoCount, minPhotos, totalSecs, maxVideo, bookendOk });
+}
+
+function updateSummaryWarnings({ photoCount, minPhotos, totalSecs, maxVideo, bookendOk }) {
+  const el = document.getElementById('summary-warnings');
+  if (!el) return;
+
+  const warnings = [];
+
+  if (state.media.length > 0 && !bookendOk) {
+    warnings.push('First and last items must be photos — rearrange your media above');
+  }
+
+  const photosNeeded = Math.max(0, minPhotos - photoCount);
+  if (photosNeeded > 0) {
+    warnings.push(`Add ${photosNeeded} more photo${photosNeeded !== 1 ? 's' : ''} before submitting`);
+  }
+
+  const videoOver = Math.max(0, totalSecs - maxVideo);
+  if (videoOver > 0) {
+    const n = Math.ceil(videoOver / CONFIG.videoSlotSeconds);
+    warnings.push(`Over video limit — remove ${n} photo${n !== 1 ? 's' : ''} or ${videoOver.toFixed(0)}s of video`);
+  }
+
+  const failedCount = state.media.filter(m => m.status === 'failed').length;
+  if (failedCount > 0) {
+    warnings.push(`${failedCount} item${failedCount !== 1 ? 's' : ''} failed to upload — tap to retry`);
+  }
+
+  const uploadingCount = state.media.filter(m => m.status === 'uploading').length;
+  if (uploadingCount > 0) {
+    warnings.push(`${uploadingCount} item${uploadingCount !== 1 ? 's' : ''} still uploading — wait before submitting`);
+  }
+
+  if (warnings.length === 0) {
+    el.style.display = 'none';
+    return;
+  }
+
+  el.style.display = '';
+  el.innerHTML = warnings
+    .map(w => `<div style="color:var(--accent);margin-bottom:4px;">⚠ ${w}</div>`)
+    .join('');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
