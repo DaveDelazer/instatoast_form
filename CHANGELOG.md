@@ -571,3 +571,50 @@ Frontend video upload code is correct — `doUpload()` correctly resolves signed
 - [ ] Mobile testing
 - [ ] Tighten GCS CORS origin
 - [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
+
+---
+
+## Session 10 — 2026-04-13
+
+### What changed
+
+All changes in `index.html`, pushed to `main` on GitHub Pages.
+
+#### Story mode tabs (new)
+
+- "Their story" section now has two tabs: **Step by step** (structured 3-field: action 40 chars / when 40 chars / result 50 chars) and **Have a funny story?** (free-write textarea, 150 chars)
+- Live character counters on all story fields; counter colour shifts near/at limit
+- `selectStoryMode(mode)` toggles panel visibility and tab active states
+- `buildShoutout()` branches on `state.storyMode`; `validateAll()` and `validateField()` branch accordingly
+- `shoutout_mode` added to webhook payload (`'structured'` | `'freewrite'`); `shoutout_action/when/result` are `null` in freewrite mode
+- localStorage saves/restores `storyMode`
+
+#### Genre dial selector (new)
+
+- Replaced flat genre list with a scroll-snap dial (256px viewport, masked top/bottom)
+- `renderGenres()` builds `.genre-dial-item` pills with name, description, and audio indicator
+- `updateDialCentered()` highlights the item closest to the visible centre on each scroll event
+- `scrollToSelected()` called on init to snap saved selection into view
+- `selectGenre()` auto-plays audio preview on selection, shows animated bars indicator while playing
+- Spacer divs at top/bottom of track eliminate dead scroll space at list ends
+- Storage restore updated to `.genre-dial-item` selector
+
+#### Bug fixes
+
+- **Freewrite textarea background** was `var(--bg)` (purple) — fixed to `var(--surface)` (white)
+- **Crop modal missing X button** — added close button to crop modal header (video modal already had one); wired to `MediaSlot.closeCropModal()`
+- **Genre dial dead space** — replaced 100px CSS padding with 98px invisible spacer divs so list ends flush with no overscroll gap
+- **Order ID timezone** — was using local time (`getHours` etc); changed to UTC (`getUTCHours` etc)
+
+### Current state
+
+- `index.html` pushed to GitHub Pages (commit `b2ed9f4`)
+- Cloud Function unchanged — still needs deployment before video uploads will work
+
+### Pending
+
+- [ ] **Deploy `getSignedUploadUrl` Cloud Function** — required for video uploads to work
+- [ ] End-to-end test: full form including story tabs and genre dial
+- [ ] Mobile testing
+- [ ] Tighten GCS CORS origin
+- [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
