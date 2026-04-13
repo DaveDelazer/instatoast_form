@@ -791,39 +791,6 @@
       font-weight: 500;
     }
 
-    /* Media status line and video scrubber */
-    .media-status-line {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      min-height: 18px;
-    }
-    .video-scrubber-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 4px 0 8px;
-    }
-    .video-scrubber-track {
-      flex: 1;
-      height: 6px;
-      background: var(--border);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    .video-scrubber-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 3px;
-      transition: width 0.3s ease;
-      width: 0%;
-    }
-    .video-scrubber-label {
-      font-size: 13px;
-      color: var(--muted);
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
 
     /* Upload percentage overlay */
     .upload-pct {
@@ -1014,18 +981,8 @@
       <button type="button" id="add-media-btn" class="btn-secondary" style="margin-bottom:8px;">＋ Add photos or video</button>
       <input type="file" id="media-file-input" accept="image/*,video/*" multiple hidden>
 
-      <!-- Requirements counter -->
+      <!-- Single-line media hint -->
       <div id="media-requirements" class="media-requirements"></div>
-      <div id="media-over-warning" class="media-requirements" style="display:none"></div>
-
-      <!-- Status / scrubber / error / notice -->
-      <div id="media-status-line" class="media-status-line"></div>
-      <div id="video-scrubber-wrap" class="video-scrubber-wrap" style="display:none">
-        <div class="video-scrubber-track">
-          <div id="video-scrubber-fill" class="video-scrubber-fill"></div>
-        </div>
-        <span class="video-scrubber-label">0.0s / 18s video</span>
-      </div>
       <div class="error-msg" id="media-error"></div>
       <div class="storage-notice" style="display:none" id="storage-notice">
         Photos and videos aren't saved if you refresh — re-add them if needed.
@@ -1374,85 +1331,33 @@ function removeMediaFromTray(index) {
   }
 }
 
-function updateMediaStatusLine() {
-  const el = document.getElementById('media-status-line');
-  const photoCount = state.media.filter(m => m.type === 'photo').length;
-  const videoCount = state.media.filter(m => m.type === 'video').length;
-  const totalSecs  = getTotalVideoSeconds();
-
-  if (photoCount === 0 && videoCount === 0) { el.textContent = ''; return; }
-
-  const parts = [];
-  if (photoCount > 0) parts.push(`${photoCount} photo${photoCount !== 1 ? 's' : ''}`);
-  if (videoCount > 0) parts.push(`${totalSecs.toFixed(1)}s video (${videoCount} clip${videoCount !== 1 ? 's' : ''})`);
-  el.textContent = parts.join(' · ');
-}
+function updateMediaStatusLine() { /* removed — consolidated into updateRequirementsCounter */ }
 
 function updateRequirementsCounter() {
-  const el = document.getElementById('media-requirements');
+  const el           = document.getElementById('media-requirements');
   const photoCount   = state.media.filter(m => m.type === 'photo').length;
   const totalSecs    = getTotalVideoSeconds();
   const minPhotos    = calcMinPhotos();
   const maxVideo     = calcMaxVideoSeconds();
   const photosNeeded = Math.max(0, minPhotos - photoCount);
-  const videoLeft    = Math.max(0, maxVideo - totalSecs);
   const videoOver    = Math.max(0, totalSecs - maxVideo);
-  const photosOver   = Math.max(0, photoCount - CONFIG.minPhotos);
+  const videoLeft    = Math.max(0, maxVideo - totalSecs);
 
-  const parts = [];
+  if (state.media.length === 0) { el.innerHTML = ''; return; }
 
-  // Photo status
-  if (photosNeeded > 0) {
-    parts.push(`<span class="req-unmet">Add ${photosNeeded} more photo${photosNeeded !== 1 ? 's' : ''}</span>`);
-  } else {
-    parts.push(`<span class="req-met">Photos: ${photoCount} / ${minPhotos}+ ✓</span>`);
-  }
-
-  // Video status — show dynamic max
-  if (maxVideo <= 0) {
-    parts.push(`<span class="req-unmet">No video room (too many photos)</span>`);
-  } else if (videoLeft > 0) {
-    parts.push(`<span class="${totalSecs > 0 ? 'req-met' : ''}">${videoLeft.toFixed(0)}s video available</span>`);
-  } else {
-    parts.push(`<span class="req-met">Video: max reached</span>`);
-  }
-
-  el.innerHTML = parts.join(' · ');
-
-  // Warnings when over limits
-  const warnEl = document.getElementById('media-over-warning');
   if (videoOver > 0) {
-    warnEl.innerHTML = `<span class="req-unmet">⚠ ${videoOver.toFixed(1)}s over video limit — remove video or ${Math.ceil(videoOver / CONFIG.videoSlotSeconds)} photo${Math.ceil(videoOver / CONFIG.videoSlotSeconds) !== 1 ? 's' : ''}</span>`;
-    warnEl.style.display = '';
-  } else if (photosOver > 0 && totalSecs > 0) {
-    // Only warn about excess photos reducing video when there IS video
-    const videoReduction = photosOver * CONFIG.videoSlotSeconds;
-    warnEl.innerHTML = `<span class="req-unmet">⚠ ${photosOver} extra photo${photosOver !== 1 ? 's' : ''} reduce${photosOver === 1 ? 's' : ''} video by ${videoReduction}s</span>`;
-    warnEl.style.display = '';
+    const photosToRemove = Math.ceil(videoOver / CONFIG.videoSlotSeconds);
+    el.innerHTML = `<span class="req-unmet">⚠ Remove ${photosToRemove} photo${photosToRemove !== 1 ? 's' : ''} or ${videoOver.toFixed(0)}s of video</span>`;
+  } else if (photosNeeded > 0) {
+    el.innerHTML = `<span class="req-unmet">Add ${photosNeeded} more photo${photosNeeded !== 1 ? 's' : ''}</span>`;
+  } else if (totalSecs > 0 && videoLeft > 0) {
+    el.innerHTML = `<span class="req-met">${videoLeft.toFixed(0)}s of video available</span>`;
   } else {
-    warnEl.style.display = 'none';
+    el.innerHTML = '';
   }
 }
 
-function updateVideoScrubber() {
-  const totalSecs = getTotalVideoSeconds();
-  const hasVideo  = state.media.some(m => m.type === 'video');
-  const wrap      = document.getElementById('video-scrubber-wrap');
-
-  if (!hasVideo) { wrap.style.display = 'none'; return; }
-
-  wrap.style.display = '';
-  const maxVideo = calcMaxVideoSeconds();
-  const cap      = Math.max(maxVideo, totalSecs); // avoid div-by-zero and show overflow
-  const pct      = cap > 0 ? Math.min(100, (totalSecs / cap) * 100) : 0;
-  const fill     = document.getElementById('video-scrubber-fill');
-  fill.style.width = `${pct}%`;
-  fill.style.background = totalSecs > maxVideo ? 'var(--error)' : 'var(--accent)';
-
-  // Update label to show dynamic max
-  const label = document.querySelector('.video-scrubber-label');
-  label.innerHTML = `${totalSecs.toFixed(1)}s / ${maxVideo.toFixed(0)}s video`;
-}
+function updateVideoScrubber() { /* removed — scrubber element deleted */ }
 
 function updateSubmitButtonState() {
   const hasPending = state.media.some(m => m.status === 'uploading');
