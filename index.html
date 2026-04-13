@@ -656,8 +656,10 @@
       height: 100%;
       background: var(--accent);
       border-radius: 3px;
-      pointer-events: none;
+      cursor: grab;
+      touch-action: none;
     }
+    .trim-fill:active { cursor: grabbing; }
     .trim-thumb {
       position: absolute;
       width: 24px;
@@ -1275,7 +1277,7 @@ function escapeHtml(str) {
 
 function calcMinPhotos() {
   const totalSecs = getTotalVideoSeconds();
-  const reduction = Math.floor(totalSecs / CONFIG.videoSlotSeconds);
+  const reduction = Math.ceil(totalSecs / CONFIG.videoSlotSeconds);
   return Math.max(CONFIG.minPhotos, CONFIG.basePhotos - reduction);
 }
 
@@ -1978,19 +1980,26 @@ const VideoTrim = {
 
   _initTrimSlider() {
     const rail     = document.getElementById('trim-rail');
+    const fill     = document.getElementById('trim-fill');
     const thumbIn  = document.getElementById('trim-thumb-in');
     const thumbOut = document.getElementById('trim-thumb-out');
-    let dragging   = null;
+    let dragging         = null;  // 'in' | 'out' | 'window'
+    let windowDragStartX = 0;
+    let windowDragStartIn = 0;
+
+    const getClientX = e => e.touches ? e.touches[0].clientX : e.clientX;
 
     const getPct = e => {
-      const rect    = rail.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const rect = rail.getBoundingClientRect();
+      return Math.max(0, Math.min(1, (getClientX(e) - rect.left) / rect.width));
     };
 
     const startDrag = (which) => (e) => {
-
       dragging = which;
+      if (which === 'window') {
+        windowDragStartX  = getClientX(e);
+        windowDragStartIn = this.inPoint;
+      }
       e.preventDefault();
       e.stopPropagation();
     };
@@ -1998,29 +2007,57 @@ const VideoTrim = {
     const onMove = e => {
       if (!dragging || !this.videoEl || !this.videoEl.duration) return;
       e.preventDefault();
-      const dur  = this.videoEl.duration;
-      const time = getPct(e) * dur;
+      const dur    = this.videoEl.duration;
       const maxOut = Math.min(dur, calcMaxVideoSeconds() - getTotalVideoSeconds() + (this.outPoint - this.inPoint));
 
-      if (dragging === 'in') {
+      if (dragging === 'window') {
+        const rect  = rail.getBoundingClientRect();
+        const dTime = ((getClientX(e) - windowDragStartX) / rect.width) * dur;
+        const span  = this.outPoint - this.inPoint;
+        const newIn = Math.max(0, Math.min(windowDragStartIn + dTime, dur - span));
+        this.inPoint  = newIn;
+        this.outPoint = newIn + span;
+      } else if (dragging === 'in') {
+        const time   = getPct(e) * dur;
         this.inPoint = Math.max(0, Math.min(time, this.outPoint - 1));
       } else {
+        const time    = getPct(e) * dur;
         this.outPoint = Math.max(this.inPoint + 1, Math.min(time, maxOut));
       }
-      if (this.videoEl) this.videoEl.currentTime = dragging === 'in' ? this.inPoint : this.outPoint;
+
       this.updateTrimSlider();
       this.updateDurationInfo();
+
+      // Throttle video seeks to one per animation frame — prevents seek queue
+      // buildup on large files which makes the slider feel stuck
+      if (!this._seekRafPending) {
+        this._seekRafPending = true;
+        requestAnimationFrame(() => {
+          this._seekRafPending = false;
+          if (this.videoEl && dragging && !this.playing) {
+            this.videoEl.currentTime = dragging === 'out' ? this.outPoint : this.inPoint;
+          }
+        });
+      }
     };
 
-    const endDrag = () => { dragging = null; };
+    const endDrag = () => {
+      // Final seek to land exactly on the chosen point after drag ends
+      if (this.videoEl && dragging && !this.playing) {
+        this.videoEl.currentTime = dragging === 'out' ? this.outPoint : this.inPoint;
+      }
+      dragging = null;
+    };
 
     thumbIn.addEventListener('mousedown',  startDrag('in'));
     thumbOut.addEventListener('mousedown', startDrag('out'));
+    fill.addEventListener('mousedown',     startDrag('window'));
     this._addDocListener(document, 'mousemove', onMove);
     this._addDocListener(document, 'mouseup',   endDrag);
 
-    thumbIn.addEventListener('touchstart',  startDrag('in'),  { passive: false });
-    thumbOut.addEventListener('touchstart', startDrag('out'), { passive: false });
+    thumbIn.addEventListener('touchstart',  startDrag('in'),     { passive: false });
+    thumbOut.addEventListener('touchstart', startDrag('out'),    { passive: false });
+    fill.addEventListener('touchstart',     startDrag('window'), { passive: false });
     this._addDocListener(document, 'touchmove', onMove, { passive: false });
     this._addDocListener(document, 'touchend',  endDrag);
   },
@@ -2060,12 +2097,21 @@ const VideoTrim = {
 
   playPreview() {
     if (!this.videoEl) return;
-    this.videoEl.currentTime = this.inPoint;
-    this.videoEl.play().then(() => {
-      this.playing = true;
-      document.getElementById('video-play-overlay').style.display = 'none';
-      this._runPlayhead();
-    }).catch(() => {});
+    const doPlay = () => {
+      this.videoEl.play().then(() => {
+        this.playing = true;
+        document.getElementById('video-play-overlay').style.display = 'none';
+        this._runPlayhead();
+      }).catch(() => {});
+    };
+    // Wait for seek to complete before playing — without this, play() starts
+    // from the current position before the seek lands, especially on large files
+    if (Math.abs(this.videoEl.currentTime - this.inPoint) < 0.05) {
+      doPlay();
+    } else {
+      this.videoEl.addEventListener('seeked', doPlay, { once: true });
+      this.videoEl.currentTime = this.inPoint;
+    }
   },
 
   pausePreview() {
