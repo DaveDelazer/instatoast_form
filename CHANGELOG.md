@@ -652,3 +652,50 @@ All changes in `index.html`, pushed to `main` on GitHub Pages (commit `4821a42`)
 - [ ] Mobile testing
 - [ ] Tighten GCS CORS origin
 - [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
+
+---
+
+## Session 12 — 2026-04-14
+
+### What changed
+
+All changes in `index.html`.
+
+#### iPhone MOV rotation fix — `getVideoRotation()`
+
+- Added `async function getVideoRotation(file)` that reads the first 512 KB of an MP4/MOV file as an `ArrayBuffer`, walks the `moov → trak → tkhd` box hierarchy, and returns the rotation angle (0 / 90 / 180 / 270) from the tkhd transformation matrix
+- `loadedmetadata` handler made `async`; after getting `videoWidth/videoHeight` from the `<video>` element, calls `getVideoRotation()`; swaps `rawW`/`rawH` only when rotation is 90°/270° AND `rawW > rawH` (i.e. browser returned pre-rotation landscape dims for a portrait video)
+- Comment added at `this.videoW = rawW` explaining the two-step source (browser element + tkhd correction)
+- `videoRotation: 0` added as an initialised property on the `VideoTrimUI` object
+
+#### Payload additions — `video_rotation` and `video_duration`
+
+- `trimMeta` now stores `videoRotation` alongside `videoW`/`videoH`
+- Webhook payload builder emits `video_rotation` and `video_duration` (`outPoint − inPoint`, in seconds) for each video item in `media_order`
+
+#### Opener now allows video; closer remains photo-only
+
+- Removed the validation check that blocked videos in the first (opener) position
+- "At least 2 items" error message updated to reflect closer-only restriction
+- Tray position warning badge ("must be photo") now only appears on the closer, not the opener
+- Hint text updated: "The last item must be a photo (closer). Opener can be a photo or video."
+
+#### Video crop — full video visible with dimmed overlay
+
+- Added `.video-crop-wrapper` div around the crop frame in HTML; wrapper has `overflow: hidden`, 4:5 aspect ratio, black background — clips video at modal edges while showing the full frame
+- Removed `overflow: hidden` and `clip-path` from `.video-crop-frame`; crop frame now sized as 80% of wrapper height with the 864:1115 aspect ratio
+- `::after` pseudo-element gets `box-shadow: 0 0 0 9999px rgba(0,0,0,0.5)` to dim the area outside the crop box — same visual treatment as the photo cropper
+- Play overlay bumped to `z-index: 3` to render above the dimming layer
+- No JS changes required — `clientWidth/clientHeight` still measure the crop frame correctly for all scale/pan/crop-coordinate math
+
+### Current state
+
+- `index.html` pushed to GitHub Pages
+
+### Pending
+
+- [ ] **Deploy `getSignedUploadUrl` Cloud Function** — required for video uploads to work
+- [ ] End-to-end test: full form including video trim and rotation correction
+- [ ] Mobile testing
+- [ ] Tighten GCS CORS origin
+- [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket

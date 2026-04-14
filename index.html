@@ -567,20 +567,30 @@
       overflow-x: hidden;
     }
 
-    /* Crop frame — fixed aspect ratio, clips video */
-    .video-crop-frame {
-      width: min(100%, calc(55vh * 864 / 1115));
-      aspect-ratio: 864 / 1115;
-      align-self: center;
+    /* Wrapper — shows the full video, clips at modal edges */
+    .video-crop-wrapper {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      max-height: 58vh;
       position: relative;
       overflow: hidden;
       background: #000;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      align-self: center;
+    }
+
+    /* Crop frame — transparent window; video extends past it into the wrapper */
+    .video-crop-frame {
+      height: 80%;
+      aspect-ratio: 864 / 1115;
+      position: relative;
       cursor: grab;
       flex-shrink: 0;
       touch-action: none;
       transform: translateZ(0);
-      clip-path: inset(0 round 4px);
-      border-radius: 4px;
     }
     .video-crop-frame:active { cursor: grabbing; }
     .video-crop-frame::after {
@@ -590,7 +600,8 @@
       border: 2px solid rgba(255,255,255,0.55);
       border-radius: 4px;
       pointer-events: none;
-      z-index: 1;
+      z-index: 2;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
     }
 
     /* Video element inside crop frame — positioned by JS */
@@ -612,6 +623,7 @@
       color: rgba(255,255,255,0.9);
       background: rgba(0,0,0,0.18);
       pointer-events: none;
+      z-index: 3;
     }
 
     /* Playhead — thin bar showing current position in full video */
@@ -963,10 +975,12 @@
     </div>
     <p class="crop-hint">Drag to reposition · Pinch to zoom</p>
 
-    <!-- Crop frame — video plays inside, user pans/zooms -->
-    <div id="video-crop-frame" class="video-crop-frame">
-      <video id="video-trim-el" playsinline muted></video>
-      <div id="video-play-overlay" class="video-play-overlay">▶</div>
+    <!-- Crop wrapper — shows full video; crop frame is the bright cutout -->
+    <div class="video-crop-wrapper">
+      <div id="video-crop-frame" class="video-crop-frame">
+        <video id="video-trim-el" playsinline muted></video>
+        <div id="video-play-overlay" class="video-play-overlay">▶</div>
+      </div>
     </div>
 
     <!-- Playhead — tracks position within full video duration -->
@@ -1098,7 +1112,7 @@
     <!-- 3. Photos & video -->
     <div class="form-section">
       <h2>Photos &amp; video</h2>
-      <div class="hint" style="margin-bottom:14px;">Add your photos and video clips. First and last must be photos (opener &amp; closer). Drag to reorder.</div>
+      <div class="hint" style="margin-bottom:14px;">Add your photos and video clips. The last item must be a photo (closer). Opener can be a photo or video. Drag to reorder.</div>
 
       <div id="media-tray" class="media-tray"></div>
       <button type="button" id="add-media-btn" class="btn-secondary" style="margin-bottom:8px;">＋ Add photos or video</button>
@@ -1251,6 +1265,62 @@ function isValidAudioUrl(url) {
 
 function isValidGenre(g) {
   return g.name !== 'PLACEHOLDER' && g.description !== 'PLACEHOLDER';
+}
+
+// Parse the rotation angle from an MP4/MOV file's tkhd box.
+// Some browsers (notably certain iOS/WebKit builds) report pre-rotation
+// videoWidth/videoHeight for iPhone MOV files, while still rendering the
+// video portrait. Reading the container lets us detect and correct this.
+async function getVideoRotation(file) {
+  try {
+    const buf  = await file.slice(0, 524288).arrayBuffer(); // first 512 KB
+    const view = new DataView(buf);
+    const u8   = new Uint8Array(buf);
+    const len  = buf.byteLength;
+
+    // Walk a flat list of boxes between [off, end)
+    function readBoxes(off, end) {
+      const out = [];
+      while (off + 8 <= end) {
+        const size = view.getUint32(off);
+        if (size < 8 || off + size > end) break;
+        const type = String.fromCharCode(u8[off+4], u8[off+5], u8[off+6], u8[off+7]);
+        out.push({ off, size, type });
+        off += size;
+      }
+      return out;
+    }
+
+    const moov = readBoxes(0, len).find(b => b.type === 'moov');
+    if (!moov) return 0;
+
+    for (const trak of readBoxes(moov.off + 8, moov.off + moov.size).filter(b => b.type === 'trak')) {
+      const tkhd = readBoxes(trak.off + 8, trak.off + trak.size).find(b => b.type === 'tkhd');
+      if (!tkhd) continue;
+
+      const base    = tkhd.off + 8;        // after box size + type
+      const version = view.getUint8(base); // FullBox version byte
+      // Skip: version+flags (4), time fields (v0=20, v1=32),
+      //        reserved[2]+layer+alt_group+volume+reserved (16)
+      const matOff  = base + 4 + (version === 1 ? 32 : 20) + 16;
+      if (matOff + 8 > len) continue;
+
+      // Matrix is 9 × int32 (16.16 fixed-point). First two elements encode rotation:
+      //   0°  → a=1,  b=0
+      //   90° → a=0,  b=1
+      //  180° → a=-1, b=0
+      //  270° → a=0,  b=-1
+      const a = view.getInt32(matOff)     / 65536;
+      const b = view.getInt32(matOff + 4) / 65536;
+      if      (Math.round(a) ===  0 && Math.round(b) ===  1) return 90;
+      else if (Math.round(a) === -1 && Math.round(b) ===  0) return 180;
+      else if (Math.round(a) ===  0 && Math.round(b) === -1) return 270;
+      return 0;
+    }
+    return 0;
+  } catch (e) {
+    return 0;
+  }
 }
 
 function generateOrderId() {
@@ -1415,8 +1485,8 @@ function renderMediaTray() {
       posLabel.textContent = i === 0 ? 'opener' : 'closer';
       div.appendChild(posLabel);
 
-      // Warning if video is in a bookend position
-      if (item.type === 'video') {
+      // Warning only on the closer — opener allows video
+      if (i === lastIdx && item.type === 'video') {
         const warn = document.createElement('div');
         warn.className = 'tray-video-warning';
         warn.textContent = 'must be photo';
@@ -1776,6 +1846,7 @@ const VideoTrim = {
   containerH:    0,
   videoW:        0,
   videoH:        0,
+  videoRotation: 0,
   naturalScale:  1,
   scale:         1,       // user zoom multiplier
   panX:          0,
@@ -1811,10 +1882,28 @@ const VideoTrim = {
 
     const objectUrl = URL.createObjectURL(this.currentFile);
 
-    this.videoEl.addEventListener('loadedmetadata', () => {
+    this.videoEl.addEventListener('loadedmetadata', async () => {
       URL.revokeObjectURL(objectUrl);
-      this.videoW = this.videoEl.videoWidth  || 640;
-      this.videoH = this.videoEl.videoHeight || 480;
+      let rawW = this.videoEl.videoWidth  || 640;
+      let rawH = this.videoEl.videoHeight || 480;
+
+      // Some browsers return pre-rotation dimensions for iPhone MOV files
+      // while still rendering the video in the correct portrait orientation.
+      // Detect by reading the container's tkhd rotation matrix: if the file
+      // is rotated 90°/270° but rawW > rawH, the browser hasn't swapped —
+      // so we do it here so the crop UI and payload always agree.
+      const rotation = await getVideoRotation(this.currentFile);
+      if ((rotation === 90 || rotation === 270) && rawW > rawH) {
+        [rawW, rawH] = [rawH, rawW];
+      }
+
+      // rawW/rawH start from videoEl.videoWidth/videoHeight (which some browsers
+      // already report post-rotation) and are then conditionally swapped above
+      // if getVideoRotation() shows the browser gave pre-rotation values.
+      // Result: these always reflect the display dimensions the user sees in the crop UI.
+      this.videoW        = rawW;
+      this.videoH        = rawH;
+      this.videoRotation = rotation;
 
       // Measure crop frame after it's in the DOM
       const frame    = document.getElementById('video-crop-frame');
@@ -2163,8 +2252,9 @@ const VideoTrim = {
       cropPanY:   this.panY,
       containerW: this.containerW,
       containerH: this.containerH,
-      videoW:     this.videoW,
-      videoH:     this.videoH,
+      videoW:        this.videoW,
+      videoH:        this.videoH,
+      videoRotation: this.videoRotation,
     };
 
     // Grab file ref before closeModal clears it
@@ -2617,10 +2707,7 @@ function validateAll() {
   const last        = state.media.length > 1 ? state.media[state.media.length - 1] : null;
 
   if (state.media.length < 2) {
-    showError('media-error', 'Add at least 2 items — first and last must be photos.');
-    ok = false;
-  } else if (first && first.type === 'video') {
-    showError('media-error', 'The first item (opener) must be a photo, not a video.');
+    showError('media-error', 'Add at least 2 items — the last item (closer) must be a photo.');
     ok = false;
   } else if (last && last.type === 'video') {
     showError('media-error', 'The last item (closer) must be a photo, not a video.');
@@ -2731,13 +2818,15 @@ async function handleSubmit(e) {
       media_order:      state.media.map(m => {
         const item = { url: m.publicUrl, type: m.type };
         if (m.type === 'video' && m.trimMeta) {
-          item.in_point    = m.trimMeta.inPoint;
-          item.out_point   = m.trimMeta.outPoint;
-          item.crop_scale  = m.trimMeta.cropScale;
+          item.in_point      = m.trimMeta.inPoint;
+          item.out_point     = m.trimMeta.outPoint;
+          item.video_duration = m.trimMeta.outPoint - m.trimMeta.inPoint;
+          item.crop_scale    = m.trimMeta.cropScale;
           item.crop_pan_x  = m.trimMeta.cropPanX;
           item.crop_pan_y  = m.trimMeta.cropPanY;
-          item.video_w     = m.trimMeta.videoW;
-          item.video_h     = m.trimMeta.videoH;
+          item.video_w        = m.trimMeta.videoW;
+          item.video_h        = m.trimMeta.videoH;
+          item.video_rotation = m.trimMeta.videoRotation;
           item.container_w = m.trimMeta.containerW;
           item.container_h = m.trimMeta.containerH;
         }
