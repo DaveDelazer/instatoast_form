@@ -618,3 +618,37 @@ All changes in `index.html`, pushed to `main` on GitHub Pages.
 - [ ] Mobile testing
 - [ ] Tighten GCS CORS origin
 - [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
+
+---
+
+## Session 11 — 2026-04-14
+
+### What changed
+
+All changes in `index.html`, pushed to `main` on GitHub Pages (commit `4821a42`).
+
+#### Bug fix — media hint flip
+
+- `calcMinPhotos()`: changed `Math.floor` to `Math.ceil` when computing video slot reduction
+- Root cause: fractional video (e.g. 2s of a 3s slot) gave `floor(2/3) = 0` reduction, keeping `minPhotos` at 10; adding the suggested photo then cut `maxVideoSeconds` to 0, making existing video "over budget" — user saw "add 1 photo" → add it → "remove one"
+- With `ceil`, any video in a slot counts as filling that slot; mathematically provable that "add photo" suggestions can no longer create a video overflow
+
+#### Video trim UX overhaul
+
+- **Drag-the-fill (window drag)**: grabbing the highlighted region between the two trim thumbs now slides both handles together, preserving the selected duration — replaces having to individually nudge each thumb when repositioning; mirrors iOS Photos trim behaviour
+- **RAF-throttled seeks**: during drag, `inPoint`/`outPoint` and the UI (thumbs, labels) update on every event, but `videoEl.currentTime` is set at most once per animation frame via `requestAnimationFrame`; eliminates the seek queue buildup that made the slider feel stuck on large files
+- **Seek-then-play**: `playPreview()` now listens for the `seeked` event before calling `.play()`, so playback always starts from `inPoint` rather than wherever the browser happened to be mid-seek
+- `trim-fill` CSS: changed `pointer-events: none` → `cursor: grab` + `touch-action: none` to support the new window drag
+
+### Current state
+
+- `index.html` pushed to GitHub Pages (commit `4821a42`)
+- Cloud Function unchanged — still needs deployment before video uploads will work
+
+### Pending
+
+- [ ] **Deploy `getSignedUploadUrl` Cloud Function** — required for video uploads to work
+- [ ] End-to-end test: full form including video trim
+- [ ] Mobile testing
+- [ ] Tighten GCS CORS origin
+- [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
