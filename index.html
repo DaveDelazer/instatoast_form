@@ -1189,6 +1189,7 @@ const CONFIG = {
   // Video limits
   maxVideoSeconds:       18,
   videoSlotSeconds:      3,   // each 3s of video reduces photo minimum by 1
+  maxVideoFileBytes:     200 * 1024 * 1024,  // 200 MB per video file
 
   // Photo minimum (dynamic, total including opener/closer)
   minPhotos:             4,   // floor — never goes below this
@@ -2904,7 +2905,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (f.type.startsWith('image/')) {
         MediaSlot.cropQueue.push(f);
       } else if (f.type.startsWith('video/')) {
-        if (videoRoomLeft <= 0) {
+        if (f.size > CONFIG.maxVideoFileBytes) {
+          showError('media-error', `"${f.name}" is too large — videos must be under 200 MB.`);
+        } else if (videoRoomLeft <= 0) {
           blockedVideos++;
         } else {
           VideoTrim.videoQueue.push(f);

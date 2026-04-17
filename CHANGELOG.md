@@ -699,3 +699,35 @@ All changes in `index.html`.
 - [ ] Mobile testing
 - [ ] Tighten GCS CORS origin
 - [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
+
+---
+
+## Session 13 — 2026-04-17
+
+### What changed
+
+All changes in `index.html`.
+
+#### 200 MB video file size cap
+
+- Added `maxVideoFileBytes: 200 * 1024 * 1024` to CONFIG
+- File picker handler now checks `f.size` before queuing a video; files over 200 MB are rejected immediately with a clear error message ("videos must be under 200 MB") — no upload or modal opened
+- Whole raw file is what gets uploaded to GCS (untrimmed), so this cap directly protects upload time on mobile and Cloud Function processing time
+
+#### Photo EXIF orientation — confirmed handled
+
+- cropperjs 1.x sets `checkOrientation: true` by default; no explicit option needed in our `new Cropper()` call
+- Cropped output is always `canvas.toBlob()` → JPEG with rotation baked into pixels and no EXIF metadata — photos upload correctly oriented regardless of source format (including HEIC on iOS Safari, which the browser decodes natively before the canvas sees it)
+- No code changes required
+
+### Current state
+
+- `index.html` pushed to GitHub Pages
+
+### Pending
+
+- [ ] **Deploy `getSignedUploadUrl` Cloud Function** — required for video uploads to work
+- [ ] End-to-end test: full form including video trim and rotation correction
+- [ ] Mobile testing
+- [ ] Tighten GCS CORS origin
+- [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
