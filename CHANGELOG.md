@@ -731,3 +731,108 @@ All changes in `index.html`.
 - [ ] Mobile testing
 - [ ] Tighten GCS CORS origin
 - [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket
+
+---
+
+## Session 14 — 2026-04-19
+
+### What changed
+
+All changes in `index.html`. GCS asset reorganization also performed.
+
+---
+
+#### Bug fixes
+
+**3-second video minimum**
+- Added `CONFIG.minVideoClipSeconds: 3`
+- Trim slider enforces 3s minimum span (was 1s) on both in/out thumbs
+- Initial outPoint in `openModal()` uses 3s minimum
+- File picker blocks new videos when less than 3s of budget remains
+- Requirements counter hides video mention when `videoLeft < 3` so messaging aligns with the block
+
+**Video play button in crop modal**
+- Root cause: `touchstart` calls `preventDefault()` which suppresses the synthetic `click` event on mobile
+- Added `didDrag` reset in `touchstart`, set in `touchmove`
+- Added tap detection in `touchend` handler
+
+**Consent checkbox on iPhone 10**
+- Checkbox increased from 18×18 to 22×22 with `min-width`
+- Label `min-height: 44px` (Apple recommended touch target)
+- Explicit click handler on the consent text `<span>` to manually toggle
+
+---
+
+#### New features
+
+**Edit videos already in tray**
+- Video thumbnails clickable to re-open trim modal with original file
+- `VideoTrim.editingItem` restores previous trim/crop settings
+- `confirmClip()` updates existing item in-place (no re-upload)
+- Budget calculation excludes editing item's current duration
+
+**Persist media and form state across refresh**
+- Uploaded media items serialized to localStorage (thumbUrl, publicUrl, status, trimMeta)
+- `orderId` and `uploadCounter` also persisted
+- Quota guard: retries with thumbnails stripped if localStorage throws
+
+---
+
+#### Copy and design cleanup
+
+- Tone hints: dropped emojis
+- Story hints: less prescriptive
+- Media hint: trimmed to one sentence
+- Genre descriptions: "full of good vibes" → "warm and easy"; "anthemic, and a little chaotic" → "fast, and a little unhinged"
+- Genre suggest: "style" (was "vibe")
+- Order complete: dancing toast character + "Your toast is in the toaster"
+- Crop/video modal buttons: "Cancel" (was "Remove")
+- Submit button: "Continue to payment →" (was "Order now →")
+- Progress title: "Almost there…" (was echoing status text)
+- Form header added: toast logo + "Create your toast" + subtitle
+- Payment modal: close/back button added
+
+**Genre picker redesign:**
+- Selection and audio preview now separate interactions (row = select, play button = toggle audio)
+- Checkmark fades in on selected genre
+- Play button is 44px touch target
+- Audio fades out over 200ms
+- Dial tightened: height 256→200px, gap 8→6px, spacers 98→75px
+
+---
+
+#### Performance, security, stability
+
+- **Stripe.js lazy-loaded** via `loadStripe()` — removed blocking `<script>` from `<head>`
+- `<link rel="preconnect">` for GCS; toast image `loading="lazy"`
+- **SRI hashes** on SortableJS, CropperJS JS, and CropperJS CSS
+- `fetchWithTimeout()` — webhook 15s, signed URL 10s, checkout 15s
+- Upload retries capped at 3 per item
+- `haptic()` on tone, genre, and tray reorder
+
+---
+
+#### GCS asset reorganization
+
+```
+instatoast/assets/
+  audio/hb_reggae.mp3    (moved from flat assets/)
+  images/toast-man.png   (uploaded, 89 KB)
+```
+
+All audio URLs and toast image URL updated in CONFIG/HTML.
+
+---
+
+### Current state
+
+- `index.html` pushed to GitHub Pages
+
+### Pending
+
+- [ ] **Deploy `getSignedUploadUrl` Cloud Function** — required for video uploads to work
+- [ ] Upload `hb_country.mp3` and `hb_pop_punk.mp3` to `assets/audio/` in GCS
+- [ ] End-to-end test: full form including video trim, edit, and persistence
+- [ ] Mobile testing (consent checkbox on iPhone 10, video play button, haptics)
+- [ ] Tighten GCS CORS origin
+- [ ] Remove `allUsers` objectCreator from `instatoast-videos` bucket

@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Order — Instatoast</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
-  <script src="https://js.stripe.com/v3/"></script>
+  <link rel="preconnect" href="https://storage.googleapis.com">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" integrity="sha384-6LFfkTKLRlzFtgx8xsWyBdKGpcMMQTkv+dB7rAbugeJAu1Ym2q1Aji1cjHBG12Xh" crossorigin="anonymous">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -52,6 +52,12 @@
     .form-header p {
       font-size: 15px;
       color: rgba(255,255,255,0.75);
+    }
+    .header-logo {
+      width: 72px;
+      height: auto;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
     }
 
     .form-section {
@@ -215,7 +221,7 @@
       background: #fafaf9;
     }
     .genre-dial-box {
-      height: 256px;
+      height: 200px;
       overflow: hidden;
       -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 22%, black 78%, transparent 100%);
       mask-image: linear-gradient(to bottom, transparent 0%, black 22%, black 78%, transparent 100%);
@@ -226,7 +232,7 @@
       scroll-snap-type: y mandatory;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       padding: 0 10px;
       scrollbar-width: none;
       -ms-overflow-style: none;
@@ -234,7 +240,7 @@
       box-sizing: border-box;
     }
     .genre-dial-track::-webkit-scrollbar { display: none; }
-    .genre-dial-spacer { flex: 0 0 auto; height: 98px; pointer-events: none; }
+    .genre-dial-spacer { flex: 0 0 auto; height: 75px; pointer-events: none; }
 
     .genre-dial-item {
       flex: 0 0 auto;
@@ -290,17 +296,35 @@
 
     .dial-audio-indicator {
       flex-shrink: 0;
-      width: 24px;
+      width: 44px;
+      height: 44px;
+      margin: -10px -8px -10px 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
+      font-size: 12px;
       color: var(--muted);
       opacity: 0.5;
       transition: opacity 0.15s, color 0.15s;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      border: none;
+      background: none;
+      padding: 0;
+      font-family: inherit;
     }
+    .dial-audio-indicator:active { opacity: 0.7; }
     .genre-dial-item.centered:not(.selected) .dial-audio-indicator { opacity: 1; color: var(--accent); }
     .genre-dial-item.selected .dial-audio-indicator { opacity: 1; color: #fff; }
+
+    .dial-check {
+      font-size: 14px;
+      margin-right: 2px;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .genre-dial-item.selected .dial-check { opacity: 1; }
 
     .dial-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
     .dial-bar {
@@ -360,16 +384,20 @@
       cursor: pointer;
       font-size: 14px;
       line-height: 1.5;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px;
     }
     .checkbox-label input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
       flex-shrink: 0;
-      margin-top: 2px;
+      margin-top: 1px;
       accent-color: var(--accent);
       cursor: pointer;
     }
     .checkbox-label a { color: var(--accent); }
+    .checkbox-label span { flex: 1; }
 
     /* ── Submit ──────────────────────────────────────────────────────────── */
     .btn-primary {
@@ -483,6 +511,9 @@
     }
 
     /* ── Responsive ─────────────────────────────────────────────────────── */
+    @media (min-width: 400px) {
+      .thumbnail { width: 80px; height: 103px; }
+    }
     @media (max-width: 480px) {
       .form-wrapper { padding: 20px 16px 60px; }
       .form-section { padding: 20px 16px; }
@@ -764,6 +795,9 @@
     .payment-modal__header {
       padding: 20px 20px 0;
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
     .payment-modal__title {
       font-size: 17px;
@@ -792,7 +826,23 @@
       text-align: center;
       box-shadow: var(--shadow);
     }
-    .order-complete__icon { font-size: 52px; margin-bottom: 16px; }
+    .order-complete__toast-dance {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+      pointer-events: none;
+    }
+    .dancing-toast {
+      width: 140px;
+      height: auto;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.15));
+      animation: toastGroove 1.6s ease-in-out infinite;
+      transform-origin: bottom center;
+    }
+    @keyframes toastGroove {
+      0%, 100% { transform: rotate(-15deg) scale(1); }
+      50%      { transform: rotate(15deg) scale(1.02); }
+    }
     .order-complete__title { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
     .order-complete__msg { font-size: 15px; color: var(--muted); line-height: 1.6; }
 
@@ -923,6 +973,7 @@
   <div class="payment-modal__card">
     <div class="payment-modal__header">
       <span class="payment-modal__title">Complete your order</span>
+      <button type="button" id="payment-modal-close" class="modal-close" aria-label="Go back">✕</button>
     </div>
     <div id="payment-element" class="payment-modal__body"></div>
   </div>
@@ -931,16 +982,18 @@
 <!-- ─── Order complete ────────────────────────────────────────────────────── -->
 <div id="order-complete" class="order-complete hidden">
   <div class="order-complete__card">
-    <div class="order-complete__icon">🎉</div>
-    <h2 class="order-complete__title">You're all set!</h2>
-    <p class="order-complete__msg">Your order is confirmed. We'll send the finished video to you as soon as it's ready.</p>
+    <div class="order-complete__toast-dance">
+      <img src="https://storage.googleapis.com/instatoast-videos/instatoast/assets/images/toast-man.png" alt="Instatoast" class="dancing-toast" loading="lazy">
+    </div>
+    <h2 class="order-complete__title">Your toast is in the toaster</h2>
+    <p class="order-complete__msg">We'll send the finished video to the email you entered. Sit tight!</p>
   </div>
 </div>
 
 <!-- ─── Progress overlay ──────────────────────────────────────────────────── -->
 <div id="progress-overlay" class="progress-overlay hidden" aria-live="polite">
   <div class="progress-card">
-    <div class="progress-title">Sending your order…</div>
+    <div class="progress-title">Almost there…</div>
     <div id="progress-status" class="progress-status"></div>
     <div class="progress-bar-track">
       <div id="progress-bar" class="progress-bar-fill"></div>
@@ -960,7 +1013,7 @@
       <img id="crop-image" src="" alt="">
     </div>
     <div class="modal-footer">
-      <button type="button" id="crop-cancel-btn" class="btn-secondary">Remove</button>
+      <button type="button" id="crop-cancel-btn" class="btn-secondary">Cancel</button>
       <button type="button" id="crop-confirm-btn" class="btn-primary">Use this photo</button>
     </div>
   </div>
@@ -1007,7 +1060,7 @@
     </div>
 
     <div class="modal-footer">
-      <button type="button" id="video-cancel-btn" class="btn-secondary">Remove</button>
+      <button type="button" id="video-cancel-btn" class="btn-secondary">Cancel</button>
       <button type="button" id="video-confirm-btn" class="btn-primary">Use this clip</button>
     </div>
   </div>
@@ -1015,6 +1068,11 @@
 
 <!-- ─── Form ──────────────────────────────────────────────────────────────── -->
 <div class="form-wrapper">
+  <div class="form-header">
+    <img src="https://storage.googleapis.com/instatoast-videos/instatoast/assets/images/toast-man.png" alt="Instatoast" class="header-logo" loading="lazy">
+    <h1>Create your toast</h1>
+    <p>A personalized birthday song + video, made just for them.</p>
+  </div>
   <form id="order-form" novalidate>
 
     <!-- 1. About them -->
@@ -1032,11 +1090,11 @@
         <div class="tone-options">
           <button type="button" class="tone-btn" data-tone="sweet" data-value="25">
             Sweet
-            <div class="tone-btn-hint">Loving and sweet — safe for Grandma 👵</div>
+            <div class="tone-btn-hint">Loving and sweet — safe for Grandma</div>
           </button>
           <button type="button" class="tone-btn" data-tone="roast" data-value="75">
             Roast
-            <div class="tone-btn-hint">Lightly tease them — no foul language allowed 🔥</div>
+            <div class="tone-btn-hint">Lightly tease them — no foul language</div>
           </button>
         </div>
         <div class="error-msg" id="tone-error"></div>
@@ -1051,7 +1109,7 @@
           </div>
         </div>
         <div class="genre-suggest-wrap">
-          <button type="button" class="genre-suggest-trigger" id="genre-suggest-trigger">Don't see your vibe? Suggest one</button>
+          <button type="button" class="genre-suggest-trigger" id="genre-suggest-trigger">Don't see your style? Suggest one</button>
           <input type="text" id="genre-suggestion" class="genre-suggest-input" placeholder="e.g. Jazz, Metal, K-Pop…" autocomplete="off" style="display:none">
         </div>
       </div>
@@ -1068,7 +1126,7 @@
 
       <!-- Structured panel -->
       <div id="panel-structured">
-        <div class="hint" style="margin-bottom:14px;">Pick one quirky habit or funny thing they always do. The weirder and more specific, the better the song!</div>
+        <div class="hint" style="margin-bottom:14px;">Pick one weird habit or thing they always do. The more specific, the better the song.</div>
 
         <div class="field">
           <label for="shoutout-what">What do they always do?</label>
@@ -1099,7 +1157,7 @@
 
       <!-- Free-write panel -->
       <div id="panel-freewrite" hidden>
-        <div class="hint" style="margin-bottom:14px;">Write 2–3 tight sentences. One clear funny angle works best — specific beats generic every time.</div>
+        <div class="hint" style="margin-bottom:14px;">Write 2–3 sentences. One funny angle works better than trying to cover everything.</div>
         <div class="field" style="margin-bottom:0;">
           <label for="shoutout-freewrite">Their story</label>
           <textarea id="shoutout-freewrite" autocomplete="off" maxlength="150" placeholder="e.g. Dave burns every meal he makes, somehow even cereal. The smoke alarm is basically his sous chef."></textarea>
@@ -1112,7 +1170,7 @@
     <!-- 3. Photos & video -->
     <div class="form-section">
       <h2>Photos &amp; video</h2>
-      <div class="hint" style="margin-bottom:14px;">Add your photos and video clips. The last item must be a photo (closer). Opener can be a photo or video. Drag to reorder.</div>
+      <div class="hint" style="margin-bottom:14px;">Add 10 photos, or swap some for video clips (3–18s each). The last item must be a photo. Drag to reorder.</div>
 
       <div id="media-tray" class="media-tray"></div>
       <button type="button" id="add-media-btn" class="btn-secondary" style="margin-bottom:8px;">＋ Add photos or video</button>
@@ -1122,7 +1180,7 @@
       <div id="media-requirements" class="media-requirements"></div>
       <div class="error-msg" id="media-error"></div>
       <div class="storage-notice" style="display:none" id="storage-notice">
-        Photos and videos aren't saved if you refresh — re-add them if needed.
+        Your uploads are saved, but you'll need to re-add any videos to edit their trim.
       </div>
     </div>
 
@@ -1158,7 +1216,7 @@
         <div class="error-msg" id="consent-error"></div>
       </div>
 
-      <button type="submit" id="submit-btn" class="btn-primary">Order now →</button>
+      <button type="submit" id="submit-btn" class="btn-primary">Continue to payment →</button>
       <div id="upload-pending-hint" class="upload-pending-hint"></div>
       <div id="submit-error" class="submit-error"></div>
     </div>
@@ -1166,8 +1224,8 @@
   </form>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js" integrity="sha384-BSxuMLxX+FCbTdYec3TbXlnMGEEM2QXTFdtDaveen71o+jswm2J36+xFqp8k4VHM" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" integrity="sha384-jrOgQzBlDeUNdmQn3rUt/PZD+pdcRBdWd/HWRqRo+n2OR2QtGyjSaJC0GiCeH+ir" crossorigin="anonymous"></script>
 <script>
 'use strict';
 
@@ -1189,6 +1247,7 @@ const CONFIG = {
   // Video limits
   maxVideoSeconds:       18,
   videoSlotSeconds:      3,   // each 3s of video reduces photo minimum by 1
+  minVideoClipSeconds:   3,   // minimum duration for any single video clip
   maxVideoFileBytes:     200 * 1024 * 1024,  // 200 MB per video file
 
   // Photo minimum (dynamic, total including opener/closer)
@@ -1217,20 +1276,20 @@ const CONFIG = {
     {
       key:         'reggae',
       name:        'Reggae',
-      description: 'Laid back, warm, and full of good vibes',
-      audioUrl:    'https://storage.googleapis.com/instatoast-videos/instatoast/assets/hb_reggae.mp3',
+      description: 'Laid-back island feel, warm and easy',
+      audioUrl:    'https://storage.googleapis.com/instatoast-videos/instatoast/assets/audio/hb_reggae.mp3',
     },
     {
       key:         'country',
       name:        'Country',
       description: 'Storytelling twang with a big warm chorus',
-      audioUrl:    'https://storage.googleapis.com/instatoast-videos/instatoast/assets/hb_country.mp3',
+      audioUrl:    'https://storage.googleapis.com/instatoast-videos/instatoast/assets/audio/hb_country.mp3',
     },
     {
       key:         'pop_punk',
       name:        'Pop Punk',
-      description: 'High energy, anthemic, and a little chaotic',
-      audioUrl:    'https://storage.googleapis.com/instatoast-videos/instatoast/assets/hb_pop_punk.mp3',
+      description: 'High energy, fast, and a little unhinged',
+      audioUrl:    'https://storage.googleapis.com/instatoast-videos/instatoast/assets/audio/hb_pop_punk.mp3',
     },
   ],
 };
@@ -1260,6 +1319,16 @@ let activeUploads = 0;
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
+function fetchWithTimeout(url, opts = {}, ms = 15000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(timer));
+}
+
+function haptic(ms = 10) {
+  try { navigator.vibrate?.(ms); } catch (_) {}
+}
+
 function isValidAudioUrl(url) {
   return typeof url === 'string' && url.length > 0 && url !== 'PLACEHOLDER' && url.startsWith('http');
 }
@@ -1371,6 +1440,20 @@ function getTotalVideoSeconds() {
 const STORAGE_KEY = 'instatoast_v1';
 
 function saveToStorage() {
+  // Serialize uploaded media items (without blobs — those can't be stored)
+  const mediaItems = state.media
+    .filter(m => m.status === 'uploaded')
+    .map(m => ({
+      id:          m.id,
+      type:        m.type,
+      thumbUrl:    m.thumbUrl,
+      duration:    m.duration,
+      publicUrl:   m.publicUrl,
+      status:      m.status,
+      uploadIndex: m.uploadIndex,
+      trimMeta:    m.trimMeta || null,
+    }));
+
   const data = {
     senderName:       document.getElementById('sender-name').value,
     senderEmail:      document.getElementById('sender-email').value,
@@ -1383,8 +1466,18 @@ function saveToStorage() {
     tone:             state.tone,
     genre:            state.selectedGenre,
     genreSuggestion:  document.getElementById('genre-suggestion').value,
+    // Media persistence
+    orderId:          state.orderId,
+    uploadCounter:    state.uploadCounter,
+    mediaItems:       mediaItems,
   };
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (_) {
+    // Quota exceeded — retry without thumbnail data URLs
+    data.mediaItems = data.mediaItems.map(m => ({ ...m, thumbUrl: '' }));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (__) {}
+  }
 }
 
 function restoreFromStorage() {
@@ -1415,6 +1508,27 @@ function restoreFromStorage() {
     document.getElementById('genre-suggestion').style.display = 'block';
     document.getElementById('genre-suggest-trigger').style.display = 'none';
   }
+
+  // Restore media items
+  if (data.orderId)       state.orderId       = data.orderId;
+  if (data.uploadCounter) state.uploadCounter  = data.uploadCounter;
+  if (data.mediaItems && data.mediaItems.length > 0) {
+    state.media = data.mediaItems.map(m => ({
+      id:          m.id,
+      type:        m.type,
+      blob:        null,  // blobs can't be persisted — video edit will be unavailable
+      thumbUrl:    m.thumbUrl,
+      duration:    m.duration,
+      publicUrl:   m.publicUrl,
+      status:      m.status,
+      uploadIndex: m.uploadIndex,
+      trimMeta:    m.trimMeta || null,
+    }));
+    mediaIdCounter = Math.max(mediaIdCounter, ...state.media.map(m => m.id));
+    document.getElementById('storage-notice').style.display = 'block';
+    renderMediaTray();
+  }
+
   updateSummary();
 }
 
@@ -1475,6 +1589,13 @@ function renderMediaTray() {
         retryUpload(item);
       });
       thumb.title = 'Upload failed — tap to retry';
+    } else if (item.type === 'video' && item.blob) {
+      thumb.addEventListener('click', e => {
+        if (e.target.classList.contains('thumbnail-remove')) return;
+        editVideoItem(item);
+      });
+      thumb.style.cursor = 'pointer';
+      thumb.title = 'Tap to edit trim';
     }
 
     div.appendChild(thumb);
@@ -1548,12 +1669,12 @@ function updateRequirementsCounter() {
     const photosToRemove = Math.ceil(videoOver / CONFIG.videoSlotSeconds);
     el.innerHTML = `<span class="req-unmet">⚠ Remove ${photosToRemove} photo${photosToRemove !== 1 ? 's' : ''} or ${videoOver.toFixed(0)}s of video</span>`;
   } else if (photosNeeded > 0) {
-    if (videoLeft >= 1) {
+    if (videoLeft >= CONFIG.minVideoClipSeconds) {
       el.innerHTML = `<span class="req-unmet">Add ${photosNeeded} more photo${photosNeeded !== 1 ? 's' : ''} or ${videoLeft.toFixed(0)}s of video</span>`;
     } else {
       el.innerHTML = `<span class="req-unmet">Add ${photosNeeded} more photo${photosNeeded !== 1 ? 's' : ''}</span>`;
     }
-  } else if (videoLeft > 0) {
+  } else if (videoLeft >= CONFIG.minVideoClipSeconds) {
     const photosCanAdd = Math.min(
       Math.floor(videoLeft / CONFIG.videoSlotSeconds),
       CONFIG.maxMediaItems - state.media.length
@@ -1689,10 +1810,22 @@ async function doUpload(item) {
 }
 
 function retryUpload(item) {
+  item.retryCount = (item.retryCount || 0) + 1;
+  if (item.retryCount > 3) {
+    showError('media-error', 'Upload failed after 3 attempts — remove the item and try again.');
+    return;
+  }
   item.status = 'uploading';
   renderMediaTray();
   uploadQueue.push(item);
   processUploadQueue();
+}
+
+function editVideoItem(item) {
+  // Re-open the trim modal for an existing video item so the user can adjust trim/crop
+  VideoTrim.editingItem = item;
+  VideoTrim.currentFile = item.blob;
+  VideoTrim.openModal();
 }
 
 async function resolveUploadTarget(orderId, mediaType, index, contentType) {
@@ -1712,11 +1845,11 @@ async function resolveUploadTarget(orderId, mediaType, index, contentType) {
   if (CONFIG.useSignedUrls) {
     const body = { orderId, mediaType, contentType };
     if (mediaType === 'photo' || mediaType === 'video') body.index = index;
-    const res  = await fetch(CONFIG.signedUrlEndpoint, {
+    const res  = await fetchWithTimeout(CONFIG.signedUrlEndpoint, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(body),
-    });
+    }, 10000);
     if (!res.ok) throw new Error(`Signed URL request failed (${res.status})`);
     const { signedUrl } = await res.json();
     return { uploadUrl: signedUrl, publicUrl };
@@ -1842,6 +1975,7 @@ const VideoTrim = {
   videoQueue:    [],
   queueTotal:    0,
   currentFile:   null,
+  editingItem:   null,   // non-null when re-editing an existing tray item
   videoEl:       null,
   containerW:    0,
   containerH:    0,
@@ -1917,14 +2051,30 @@ const VideoTrim = {
         this.containerH / this.videoH
       );
 
-      // Initial trim: full clip up to remaining dynamic cap
-      const alreadyUsed = getTotalVideoSeconds();
+      // When editing, exclude this item's current duration from the budget
+      const editDur   = this.editingItem ? (this.editingItem.duration || 0) : 0;
+      const alreadyUsed = getTotalVideoSeconds() - editDur;
       const maxAvailable = calcMaxVideoSeconds();
-      this.inPoint  = 0;
-      this.outPoint = Math.min(
-        this.videoEl.duration,
-        Math.max(1, maxAvailable - alreadyUsed)
-      );
+
+      // Restore previous trim if editing, otherwise full clip up to cap
+      if (this.editingItem && this.editingItem.trimMeta) {
+        this.inPoint  = this.editingItem.trimMeta.inPoint;
+        this.outPoint = this.editingItem.trimMeta.outPoint;
+      } else {
+        this.inPoint  = 0;
+        this.outPoint = Math.min(
+          this.videoEl.duration,
+          Math.max(CONFIG.minVideoClipSeconds, maxAvailable - alreadyUsed)
+        );
+      }
+
+      // Restore previous crop pan/zoom if editing
+      if (this.editingItem && this.editingItem.trimMeta) {
+        const tm = this.editingItem.trimMeta;
+        this.scale = tm.cropScale / this.naturalScale;
+        this.panX  = tm.cropPanX;
+        this.panY  = tm.cropPanY;
+      }
 
       this.videoEl.currentTime = this.inPoint;
       this.updateVideoTransform();
@@ -2026,6 +2176,7 @@ const VideoTrim = {
     f.addEventListener('touchstart', e => {
 
       e.preventDefault();
+      didDrag = false;
       if (e.touches.length === 1) {
         this.isDragging = true;
         this._dragStartX = e.touches[0].clientX - this.panX;
@@ -2042,6 +2193,7 @@ const VideoTrim = {
     f.addEventListener('touchmove', e => {
 
       e.preventDefault();
+      didDrag = true;
       if (e.touches.length === 1 && this.isDragging) {
         this.panX = e.touches[0].clientX - this._dragStartX;
         this.panY = e.touches[0].clientY - this._dragStartY;
@@ -2059,10 +2211,14 @@ const VideoTrim = {
     }, { passive: false });
 
     f.addEventListener('touchend', e => {
-      if (e.touches.length === 0) this.isDragging = false;
+      if (e.touches.length === 0) {
+        // Detect tap (no drag) — click event is suppressed by touchstart preventDefault
+        if (!didDrag) this.togglePlayback();
+        this.isDragging = false;
+      }
     });
 
-    // Tap to play/pause (skip if user was dragging)
+    // Tap to play/pause — mouse only (touch handled above in touchend)
     f.addEventListener('click', () => {
       if (!didDrag) this.togglePlayback();
     });
@@ -2109,10 +2265,10 @@ const VideoTrim = {
         this.outPoint = newIn + span;
       } else if (dragging === 'in') {
         const time   = getPct(e) * dur;
-        this.inPoint = Math.max(0, Math.min(time, this.outPoint - 1));
+        this.inPoint = Math.max(0, Math.min(time, this.outPoint - CONFIG.minVideoClipSeconds));
       } else {
         const time    = getPct(e) * dur;
-        this.outPoint = Math.max(this.inPoint + 1, Math.min(time, maxOut));
+        this.outPoint = Math.max(this.inPoint + CONFIG.minVideoClipSeconds, Math.min(time, maxOut));
       }
 
       this.updateTrimSlider();
@@ -2168,7 +2324,8 @@ const VideoTrim = {
 
   updateDurationInfo() {
     const selected  = Math.max(0, this.outPoint - this.inPoint);
-    const alreadyIn = getTotalVideoSeconds();
+    const editDur   = this.editingItem ? (this.editingItem.duration || 0) : 0;
+    const alreadyIn = getTotalVideoSeconds() - editDur;
     const remaining = Math.max(0, calcMaxVideoSeconds() - alreadyIn - selected);
     document.getElementById('trim-duration-info').textContent =
       `${selected.toFixed(1)}s selected · ${remaining.toFixed(1)}s remaining`;
@@ -2258,23 +2415,34 @@ const VideoTrim = {
       videoRotation: this.videoRotation,
     };
 
-    // Grab file ref before closeModal clears it
-    const blob = this.currentFile;
+    // Grab file ref and editing state before closeModal clears them
+    const blob        = this.currentFile;
+    const editingItem = this.editingItem;
     this.closeModal(false);
 
-    const item = {
-      id:          ++mediaIdCounter,
-      type:        'video',
-      blob,
-      thumbUrl,
-      duration,
-      publicUrl:   null,
-      status:      'uploading',
-      uploadIndex: null,
-      trimMeta,
-    };
-    addMediaToTray(item);
-    enqueueUpload(item);
+    if (editingItem) {
+      // Update existing tray item in place
+      editingItem.thumbUrl  = thumbUrl;
+      editingItem.duration  = duration;
+      editingItem.trimMeta  = trimMeta;
+      renderMediaTray();
+      updateSummary();
+      saveToStorage();
+    } else {
+      const item = {
+        id:          ++mediaIdCounter,
+        type:        'video',
+        blob,
+        thumbUrl,
+        duration,
+        publicUrl:   null,
+        status:      'uploading',
+        uploadIndex: null,
+        trimMeta,
+      };
+      addMediaToTray(item);
+      enqueueUpload(item);
+    }
   },
 
   async _grabThumbnail() {
@@ -2311,8 +2479,9 @@ const VideoTrim = {
       this.videoEl.src = '';
       this.videoEl.load();
     }
-    this.currentFile = null;
-    this.isDragging  = false;
+    this.currentFile  = null;
+    this.editingItem  = null;
+    this.isDragging   = false;
 
     processNextMediaItem();
   },
@@ -2376,6 +2545,7 @@ function extractVideoThumbnail(blob) {
 // ─────────────────────────────────────────────────────────────────────────────
 function selectTone(key) {
   state.tone = key;
+  haptic();
   document.querySelectorAll('.tone-btn').forEach(btn => {
     btn.classList.toggle('selected', btn.dataset.tone === key);
   });
@@ -2418,13 +2588,24 @@ function renderGenres() {
     item.setAttribute('aria-checked', 'false');
     item.setAttribute('tabindex', '0');
     item.innerHTML = `
+      <span class="dial-check">✓</span>
       <div class="dial-genre-info">
         <div class="dial-genre-name">${genre.name}</div>
         <div class="dial-genre-desc">${genre.description}</div>
-      </div>
-      <div class="dial-audio-indicator">
-        ${hasAudio ? '▶' : ''}
       </div>`;
+
+    if (hasAudio) {
+      const playBtn = document.createElement('button');
+      playBtn.type = 'button';
+      playBtn.className = 'dial-audio-indicator';
+      playBtn.innerHTML = '▶';
+      playBtn.setAttribute('aria-label', `Preview ${genre.name}`);
+      playBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleGenreAudio(genre.key);
+      });
+      item.appendChild(playBtn);
+    }
 
     item.addEventListener('click', () => selectGenre(genre.key));
     item.addEventListener('keydown', e => {
@@ -2462,22 +2643,24 @@ function scrollToSelected() {
   }
 }
 
-function selectGenre(key) {
-  // Stop any playing audio and reset its indicator
-  if (state.activeAudio) {
-    state.activeAudio.pause();
-    state.activeAudio.currentTime = 0;
-    state.activeAudio = null;
-  }
-  if (state.activePlayBtn) {
-    state.activePlayBtn.innerHTML = '▶';
-    state.activePlayBtn = null;
-  }
+function fadeOutAudio(audio, ms = 200) {
+  if (!audio) return;
+  const start = audio.volume;
+  const step = start / (ms / 16);
+  const fade = () => {
+    audio.volume = Math.max(0, audio.volume - step);
+    if (audio.volume > 0) requestAnimationFrame(fade);
+    else { audio.pause(); audio.currentTime = 0; audio.volume = start; }
+  };
+  requestAnimationFrame(fade);
+}
 
-  // Tapping the already-selected genre just stops audio (handled above) — stay selected
+function selectGenre(key) {
+  // Tapping the already-selected genre is a no-op
   if (state.selectedGenre === key) return;
 
   state.selectedGenre = key;
+  haptic();
   document.querySelectorAll('.genre-dial-item').forEach(el => {
     const active = el.dataset.key === key;
     el.classList.toggle('selected', active);
@@ -2486,12 +2669,34 @@ function selectGenre(key) {
   clearError('genre-error');
   updateSummary();
   saveToStorage();
+}
 
-  // Auto-play preview if available
+function stopGenreAudio() {
+  if (state.activeAudio) {
+    fadeOutAudio(state.activeAudio);
+    state.activeAudio = null;
+  }
+  if (state.activePlayBtn) {
+    state.activePlayBtn.innerHTML = '▶';
+    state.activePlayBtn = null;
+  }
+}
+
+function toggleGenreAudio(key) {
+  const indicator = document.querySelector(`.genre-dial-item[data-key="${key}"] .dial-audio-indicator`);
+
+  // If this genre is already playing, stop it
+  if (state.activeAudio && state.activePlayBtn === indicator) {
+    stopGenreAudio();
+    return;
+  }
+
+  // Stop any other playing audio first
+  stopGenreAudio();
+
   const genre = CONFIG.genres.find(g => g.key === key);
   if (!genre || !isValidAudioUrl(genre.audioUrl)) return;
 
-  const indicator = document.querySelector(`.genre-dial-item[data-key="${key}"] .dial-audio-indicator`);
   const audio = new Audio(genre.audioUrl);
   state.activeAudio   = audio;
   state.activePlayBtn = indicator;
@@ -2754,13 +2959,30 @@ function setProgress(done, total, statusText) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Payment modal
 // ─────────────────────────────────────────────────────────────────────────────
-async function openPaymentModal(orderId, customerEmail) {
-  setProgress(10, 10, 'Opening payment…');
+let _stripePromise = null;
+function loadStripe() {
+  if (_stripePromise) return _stripePromise;
+  _stripePromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://js.stripe.com/v3/';
+    s.onload = () => resolve(window.Stripe);
+    s.onerror = () => reject(new Error('Failed to load Stripe'));
+    document.head.appendChild(s);
+  });
+  return _stripePromise;
+}
 
-  const res = await fetch(CONFIG.checkoutSessionUrl, {
+async function openPaymentModal(orderId, customerEmail) {
+  setProgress(8, 10, 'Loading payment…');
+  const StripeFactory = await loadStripe();
+
+  setProgress(9, 10, 'Opening payment…');
+  const res = await fetchWithTimeout(CONFIG.checkoutSessionUrl, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ orderId, customerEmail }),
+  }, 15000).catch(err => {
+    throw err.name === 'AbortError' ? new Error('Payment request timed out — please try again') : err;
   });
   if (!res.ok) throw new Error(`Payment session failed (${res.status})`);
   const { clientSecret } = await res.json();
@@ -2769,7 +2991,7 @@ async function openPaymentModal(orderId, customerEmail) {
   document.getElementById('payment-modal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 
-  const stripe   = Stripe(CONFIG.stripePublishableKey);
+  const stripe   = StripeFactory(CONFIG.stripePublishableKey);
   const checkout = await stripe.initEmbeddedCheckout({
     fetchClientSecret: () => Promise.resolve(clientSecret),
   });
@@ -2838,10 +3060,12 @@ async function handleSubmit(e) {
     };
 
     setProgress(5, 10, 'Sending your order…');
-    const webhookRes = await fetch(CONFIG.webhookUrl, {
+    const webhookRes = await fetchWithTimeout(CONFIG.webhookUrl, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload),
+    }, 15000).catch(err => {
+      throw err.name === 'AbortError' ? new Error('Request timed out — please try again') : err;
     });
     if (!webhookRes.ok) throw new Error(`Webhook failed (${webhookRes.status})`);
 
@@ -2882,6 +3106,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('video-cancel-btn').addEventListener('click',  () => VideoTrim.closeModal(true));
   document.getElementById('video-modal-close-btn').addEventListener('click', () => VideoTrim.closeModal(true));
 
+  // Payment modal close — let user go back to edit form
+  document.getElementById('payment-modal-close').addEventListener('click', () => {
+    document.getElementById('payment-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+    document.getElementById('submit-btn').disabled = false;
+  });
+
   // Media file picker (photos + videos — unified tray)
   document.getElementById('add-media-btn').addEventListener('click', () => {
     document.getElementById('media-file-input').click();
@@ -2907,7 +3138,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (f.type.startsWith('video/')) {
         if (f.size > CONFIG.maxVideoFileBytes) {
           showError('media-error', `"${f.name}" is too large — videos must be under 200 MB.`);
-        } else if (videoRoomLeft <= 0) {
+        } else if (videoRoomLeft < CONFIG.minVideoClipSeconds) {
           blockedVideos++;
         } else {
           VideoTrim.videoQueue.push(f);
@@ -2929,6 +3160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     animation:  150,
     ghostClass: 'sortable-ghost',
     onEnd() {
+      haptic(15);
       const tray     = document.getElementById('media-tray');
       const newOrder = [];
       tray.querySelectorAll('.tray-item[data-id]').forEach(el => {
@@ -2983,6 +3215,19 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('consent').addEventListener('change', () => {
     if (document.getElementById('consent').checked) clearError('consent-error');
   });
+
+  // iOS fix: tapping text near the <a> inside the label can fail to toggle the checkbox
+  // on some iOS versions. Handle it on the consent span directly.
+  const consentSpan = document.querySelector('.checkbox-label span');
+  if (consentSpan) {
+    consentSpan.addEventListener('click', e => {
+      if (e.target.tagName === 'A') return; // let link clicks through
+      e.preventDefault(); // prevent native label toggle (we handle it manually)
+      const cb = document.getElementById('consent');
+      cb.checked = !cb.checked;
+      cb.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
 
   document.getElementById('genre-suggest-trigger').addEventListener('click', () => {
     const input   = document.getElementById('genre-suggestion');
